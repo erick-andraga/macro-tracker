@@ -14,19 +14,14 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
-env:
-  # Run the bundled JS actions (checkout/setup-node/upload-artifact) on Node 24
-  # to silence the Node 20 deprecation warnings until newer action majors ship.
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - name: Build static export
@@ -40,7 +35,7 @@ jobs:
         run: npm run build
       - name: Disable Jekyll
         run: touch out/.nojekyll
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: out
 
@@ -52,4 +47,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
