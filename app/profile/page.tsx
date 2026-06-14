@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import {
   ACTIVITY_LABELS,
   bmr,
@@ -25,6 +26,7 @@ type HeightUnit = "cm" | "in";
 
 export default function ProfilePage() {
   const { ready, profile, setProfile } = useStore();
+  const { enabled, user, signOut } = useAuth();
 
   const [draft, setDraft] = useState<Profile>(profile);
   const [wUnit, setWUnit] = useState<WeightUnit>("lb");
@@ -222,6 +224,19 @@ export default function ProfilePage() {
           Split: 30% protein · 40% carbs · 30% fat
         </p>
       </div>
+
+      {enabled && (
+        <div className="card">
+          <h2>Account</h2>
+          <div className="row" style={{ marginBottom: 14 }}>
+            <span className="muted">Signed in as</span>
+            <strong>{user?.email ?? "—"}</strong>
+          </div>
+          <button className="btn btn-ghost" onClick={signOut}>
+            Sign out
+          </button>
+        </div>
+      )}
     </div>
   );
 }

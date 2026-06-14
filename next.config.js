@@ -12,6 +12,10 @@ const nextConfig = {
   basePath: basePath || undefined,
   assetPrefix: basePath || undefined,
   trailingSlash: true,
+  env: {
+    // Exposed to the client so OAuth redirects target the right base URL.
+    NEXT_PUBLIC_BASE_PATH: basePath,
+  },
 };
 
 module.exports = nextConfig;

@@ -141,8 +141,8 @@ export default function QuickLogModal({
         z={110}
       >
         <AddFoodForm
-          onAdd={(f) => {
-            const created = addFood(f);
+          onAdd={async (f) => {
+            const created = await addFood(f);
             setShowCreate(false);
             pick(created);
           }}

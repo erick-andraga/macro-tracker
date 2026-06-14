@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
+import { AuthProvider } from "@/lib/auth";
+import AuthGate from "@/components/AuthGate";
 import TabBar from "@/components/TabBar";
 
 export const metadata: Metadata = {
@@ -26,10 +28,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <StoreProvider>
-          <main className="app">{children}</main>
-          <TabBar />
-        </StoreProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <AuthGate>
+              <main className="app">{children}</main>
+              <TabBar />
+            </AuthGate>
+          </StoreProvider>
+        </AuthProvider>
       </body>
     </html>
   );

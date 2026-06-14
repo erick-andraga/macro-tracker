@@ -28,6 +28,10 @@ jobs:
         env:
           # Serve under /<repo>/ on GitHub Pages
           PAGES_BASE_PATH: /${{ github.event.repository.name }}
+          # Supabase keys (set as repo Variables: Settings > Secrets and
+          # variables > Actions > Variables). The anon key is safe to expose.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
       - name: Disable Jekyll
         run: touch out/.nojekyll
