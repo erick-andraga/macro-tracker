@@ -8,14 +8,20 @@ import {
   useState,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { appBaseUrl, supabase, supabaseEnabled } from "./supabase";
+import { supabase, supabaseEnabled } from "./supabase";
+
+interface AuthResult {
+  error?: string;
+  info?: string;
+}
 
 interface AuthValue {
   enabled: boolean;
   ready: boolean;
   session: Session | null;
   user: User | null;
-  signInWithGoogle: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
 }
 
@@ -46,12 +52,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ready,
       session,
       user: session?.user ?? null,
-      signInWithGoogle: async () => {
-        if (!supabase) return;
-        await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: appBaseUrl() },
+      signIn: async (email, password) => {
+        if (!supabase) return { error: "Auth not configured." };
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
+        return error ? { error: error.message } : {};
+      },
+      signUp: async (email, password) => {
+        if (!supabase) return { error: "Auth not configured." };
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) return { error: error.message };
+        // If email confirmation is on, there's no session yet.
+        if (!data.session)
+          return { info: "Check your email to confirm your account." };
+        return {};
       },
       signOut: async () => {
         if (!supabase) return;
