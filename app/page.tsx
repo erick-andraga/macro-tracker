@@ -5,11 +5,21 @@ import { useStore, todayStr } from "@/lib/store";
 import { entryTotals, goalMacros, round } from "@/lib/macros";
 import { CalorieRing, MacroBars } from "@/components/MacroDisplay";
 import QuickLogModal from "@/components/QuickLogModal";
+import Modal from "@/components/Modal";
+import type { LogEntry } from "@/lib/types";
 
 export default function TodayPage() {
-  const { ready, foods, profile, entriesFor, removeEntry } = useStore();
+  const { ready, foods, profile, entriesFor, updateEntry, removeEntry } =
+    useStore();
   const date = todayStr();
   const [showLog, setShowLog] = useState(false);
+  const [editing, setEditing] = useState<LogEntry | null>(null);
+  const [editQty, setEditQty] = useState("1");
+
+  const openEdit = (e: LogEntry) => {
+    setEditing(e);
+    setEditQty(String(e.quantity));
+  };
 
   const todays = useMemo(
     () => (ready ? entriesFor(date) : []),
@@ -63,13 +73,23 @@ export default function TodayPage() {
               if (!f) return null;
               return (
                 <div className="list-item" key={e.id}>
-                  <div>
+                  <button
+                    onClick={() => openEdit(e)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      textAlign: "left",
+                      color: "inherit",
+                      flex: 1,
+                    }}
+                  >
                     <div className="name">{f.name}</div>
                     <div className="muted small">
                       {e.quantity} × {f.serving} ·{" "}
                       {round(f.calories * e.quantity)} kcal
                     </div>
-                  </div>
+                  </button>
                   <button
                     className="btn btn-sm btn-danger"
                     onClick={() => removeEntry(e.id)}
@@ -85,6 +105,67 @@ export default function TodayPage() {
       </div>
 
       <QuickLogModal open={showLog} onClose={() => setShowLog(false)} />
+
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title={
+          editing ? `Edit ${foodMap.get(editing.foodId)?.name ?? ""}` : ""
+        }
+      >
+        {editing &&
+          (() => {
+            const f = foodMap.get(editing.foodId);
+            if (!f) return null;
+            const q = parseFloat(editQty) || 0;
+            return (
+              <div>
+                <p className="muted small" style={{ marginTop: 0 }}>
+                  Per {f.serving}: {f.calories} kcal · P{f.protein} / C{f.carbs}{" "}
+                  / F{f.fat}
+                </p>
+                <div className="field">
+                  <label>Servings</label>
+                  <input
+                    type="number"
+                    min="0.25"
+                    step="0.25"
+                    inputMode="decimal"
+                    autoFocus
+                    value={editQty}
+                    onChange={(ev) => setEditQty(ev.target.value)}
+                  />
+                </div>
+                <div className="card card-accent" style={{ marginBottom: 16 }}>
+                  <div className="row">
+                    <span className="muted small">Total</span>
+                    <strong>{round(f.calories * q)} kcal</strong>
+                  </div>
+                </div>
+                <div className="grid-2">
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => {
+                      removeEntry(editing.id);
+                      setEditing(null);
+                    }}
+                  >
+                    Remove
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      updateEntry(editing.id, Math.max(0.25, q || 0.25));
+                      setEditing(null);
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+      </Modal>
     </div>
   );
 }

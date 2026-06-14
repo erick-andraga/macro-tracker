@@ -25,6 +25,7 @@ interface StoreValue {
   profile: Profile;
   addFood: (f: Omit<Food, "id">) => Promise<Food> | Food;
   logFood: (foodId: string, quantity: number, date: string) => void;
+  updateEntry: (id: string, quantity: number) => void;
   removeEntry: (id: string) => void;
   setProfile: (p: Profile) => void;
   entriesFor: (date: string) => LogEntry[];
@@ -205,6 +206,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         setEntries((p) => [{ id: newId(), foodId, quantity, date }, ...p]);
+      },
+      updateEntry: (id, quantity) => {
+        setEntries((p) =>
+          p.map((e) => (e.id === id ? { ...e, quantity } : e))
+        );
+        if (remote)
+          supabase!.from("entries").update({ quantity }).eq("id", id).then(() => {});
       },
       removeEntry: (id) => {
         setEntries((p) => p.filter((e) => e.id !== id));
