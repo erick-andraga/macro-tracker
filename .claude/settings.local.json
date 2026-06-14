@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(\"---\")",
+      "PowerShell($paths = @\\(\"$env:ProgramFiles\\\\nodejs\\\\node.exe\",\"${env:ProgramFiles\\(x86\\)}\\\\nodejs\\\\node.exe\",\"$env:APPDATA\\\\npm\",\"$env:LOCALAPPDATA\\\\Programs\\\\nodejs\\\\node.exe\",\"$env:LOCALAPPDATA\\\\fnm_multishells\",\"$env:USERPROFILE\\\\.volta\\\\bin\\\\node.exe\"\\); foreach\\($p in $paths\\){ if\\(Test-Path $p\\){ \"FOUND: $p\" } }; \"nvm:\"; Test-Path \"$env:APPDATA\\\\nvm\"; \\(Get-Command pnpm,yarn -ErrorAction SilentlyContinue\\).Source)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); Set-Location \"C:\\\\Users\\\\erick\\\\Desktop\\\\code\\\\tracking-app\"; npm install 2>&1 | Select-Object -Last 20)"
+    ]
+  }
+}
