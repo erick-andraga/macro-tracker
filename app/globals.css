@@ -126,6 +126,19 @@ button {
   font-weight: 800;
 }
 
+/* Subtle red icon button (×) that blends with the gray surface */
+.btn-x {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: #c47a7a;
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1;
+}
+.btn-x:active {
+  opacity: 0.8;
+}
+
 input,
 select {
   font: inherit;
@@ -374,14 +387,15 @@ label {
   display: none;
 }
 .modal-close {
-  background: linear-gradient(135deg, #b91c1c, #dc2626);
-  border: none;
-  color: #fff;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: #c47a7a;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  font-size: 0.85rem;
-  font-weight: 800;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
 }
 .modal-body {
   padding: 8px 18px 24px;

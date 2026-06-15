@@ -64,9 +64,13 @@ export default function FoodsPage() {
                   {f.serving} · {f.calories} kcal
                 </div>
                 <div className="small" style={{ marginTop: 2 }}>
-                  <span style={{ color: "var(--protein)" }}>P{f.protein}</span>{" "}
-                  <span style={{ color: "var(--carbs)" }}>C{f.carbs}</span>{" "}
-                  <span style={{ color: "var(--fat)" }}>F{f.fat}</span>
+                  <span style={{ color: "var(--protein)" }}>
+                    Protein {f.protein}g
+                  </span>
+                  <span className="muted"> - </span>
+                  <span style={{ color: "var(--carbs)" }}>Carbs {f.carbs}g</span>
+                  <span className="muted"> - </span>
+                  <span style={{ color: "var(--fat)" }}>Fat {f.fat}g</span>
                 </div>
               </div>
               <button

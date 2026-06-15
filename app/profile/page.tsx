@@ -84,6 +84,41 @@ export default function ProfilePage() {
       </p>
 
       <div className="card">
+        <h2>Calculated goals</h2>
+        <div className="row">
+          <span className="muted">BMR (Mifflin-St Jeor)</span>
+          <strong>{Math.round(bmr(draft))} kcal</strong>
+        </div>
+        <div className="row" style={{ marginTop: 8 }}>
+          <span className="muted">TDEE (maintenance)</span>
+          <strong>{Math.round(tdee(draft))} kcal</strong>
+        </div>
+        <div className="row" style={{ marginTop: 8 }}>
+          <span className="muted">Daily target ({draft.goal})</span>
+          <strong style={{ color: "var(--accent)" }}>
+            {goalCalories(draft)} kcal
+          </strong>
+        </div>
+        <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "12px 0" }} />
+        <div className="row">
+          <span style={{ color: "var(--protein)" }}>Protein</span>
+          <strong>{macros.protein} g</strong>
+        </div>
+        <div className="row" style={{ marginTop: 8 }}>
+          <span style={{ color: "var(--carbs)" }}>Carbs</span>
+          <strong>{macros.carbs} g</strong>
+        </div>
+        <div className="row" style={{ marginTop: 8 }}>
+          <span style={{ color: "var(--fat)" }}>Fat</span>
+          <strong>{macros.fat} g</strong>
+        </div>
+        <p className="small muted" style={{ marginTop: 12, marginBottom: 0 }}>
+          {PROTEIN_PER_KG[th]} g/kg protein ·{" "}
+          {Math.round(FAT_PCT[th] * 100)}% fat · rest carbs
+        </p>
+      </div>
+
+      <div className="card">
         <div className="field">
           <label>Age</label>
           <input
@@ -220,41 +255,6 @@ export default function ProfilePage() {
         <button className="btn" onClick={save}>
           {saved ? "✅ Saved" : "Save profile"}
         </button>
-      </div>
-
-      <div className="card">
-        <h2>Calculated goals</h2>
-        <div className="row">
-          <span className="muted">BMR (Mifflin-St Jeor)</span>
-          <strong>{Math.round(bmr(draft))} kcal</strong>
-        </div>
-        <div className="row" style={{ marginTop: 8 }}>
-          <span className="muted">TDEE (maintenance)</span>
-          <strong>{Math.round(tdee(draft))} kcal</strong>
-        </div>
-        <div className="row" style={{ marginTop: 8 }}>
-          <span className="muted">Daily target ({draft.goal})</span>
-          <strong style={{ color: "var(--accent)" }}>
-            {goalCalories(draft)} kcal
-          </strong>
-        </div>
-        <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "12px 0" }} />
-        <div className="row">
-          <span style={{ color: "var(--protein)" }}>Protein</span>
-          <strong>{macros.protein} g</strong>
-        </div>
-        <div className="row" style={{ marginTop: 8 }}>
-          <span style={{ color: "var(--carbs)" }}>Carbs</span>
-          <strong>{macros.carbs} g</strong>
-        </div>
-        <div className="row" style={{ marginTop: 8 }}>
-          <span style={{ color: "var(--fat)" }}>Fat</span>
-          <strong>{macros.fat} g</strong>
-        </div>
-        <p className="small muted" style={{ marginTop: 12, marginBottom: 0 }}>
-          {PROTEIN_PER_KG[th]} g/kg protein ·{" "}
-          {Math.round(FAT_PCT[th] * 100)}% fat · rest carbs
-        </p>
       </div>
 
       {enabled && (

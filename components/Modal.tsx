@@ -51,7 +51,7 @@ export default function Modal({
               onClick={onClose}
               aria-label="Close"
             >
-              ✕
+              ×
             </button>
           </div>
         </div>

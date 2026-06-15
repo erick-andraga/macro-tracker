@@ -89,11 +89,11 @@ export default function TodayPage() {
                     </div>
                   </button>
                   <button
-                    className="btn btn-sm btn-danger"
+                    className="btn btn-sm btn-x"
                     onClick={() => setPendingDelete(e)}
                     aria-label="Remove"
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
               );

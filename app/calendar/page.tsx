@@ -17,6 +17,18 @@ const fmt = (d: Date) =>
     d.getDate()
   ).padStart(2, "0")}`;
 
+// Day color by calories vs goal: red (under) -> green (met) -> purple (exceeded)
+const RED = [239, 68, 68];
+const GREEN = [34, 197, 94];
+const PURPLE = [168, 85, 247];
+const mix = (a: number[], b: number[], t: number) =>
+  `rgb(${a
+    .map((v, i) => Math.round(v + (b[i] - v) * Math.max(0, Math.min(1, t))))
+    .join(", ")})`;
+function dayColor(ratio: number) {
+  return ratio <= 1 ? mix(RED, GREEN, ratio) : mix(GREEN, PURPLE, (ratio - 1) / 0.3);
+}
+
 export default function CalendarPage() {
   const { ready, foods, entries, profileForMonth } = useStore();
   const now = new Date();
@@ -121,17 +133,28 @@ export default function CalendarPage() {
             const kcal = byDate.get(ds);
             const classes = ["cal-cell"];
             if (ds === today) classes.push("today");
-            if (kcal) classes.push("has-data");
             if (ds === selected) classes.push("selected");
+            const colored = !!kcal && ds !== selected;
+            const bg = colored
+              ? dayColor((kcal as number) / (goal.calories || 1))
+              : undefined;
             return (
               <button
                 key={i}
                 className={classes.join(" ")}
                 onClick={() => setSelected(ds)}
+                style={
+                  colored ? { background: bg, color: "#10131a" } : undefined
+                }
               >
                 <span>{d}</span>
                 {kcal ? (
-                  <span className="cal-kcal">{round(kcal)}</span>
+                  <span
+                    className="cal-kcal"
+                    style={colored ? { color: "rgba(0,0,0,0.6)" } : undefined}
+                  >
+                    {round(kcal)}
+                  </span>
                 ) : (
                   <span className="cal-kcal">&nbsp;</span>
                 )}
