@@ -119,10 +119,11 @@ button {
   border: 1px solid var(--border);
 }
 .btn-danger {
-  background: linear-gradient(135deg, var(--danger), var(--danger-2));
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
   color: #fff;
   border: none;
   border-radius: 999px;
+  font-weight: 800;
 }
 
 input,
@@ -373,13 +374,14 @@ label {
   display: none;
 }
 .modal-close {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--muted);
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
+  border: none;
+  color: #fff;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   font-size: 0.85rem;
+  font-weight: 800;
 }
 .modal-body {
   padding: 8px 18px 24px;

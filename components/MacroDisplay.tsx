@@ -135,8 +135,9 @@ function Bar({
           {label}
         </span>
         <span className="small muted">
-          {round(value)} / {round(goal)} g
-          {over && (
+          {round(value)}{" "}
+          <span style={{ color: darkColor }}>/ {round(goal)} g</span>
+          {over && round(value - goal) >= 1 && (
             <span style={{ color: darkColor }}> (+{round(value - goal)})</span>
           )}
         </span>

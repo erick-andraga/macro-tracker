@@ -32,7 +32,7 @@ export default function FoodsPage() {
     <div>
       <h1>Foods</h1>
       <p className="muted" style={{ marginTop: 0 }}>
-        Tap a food to edit it. Add your own with the + button.
+        Tap a food to edit it.
       </p>
 
       {toast && (
@@ -61,8 +61,12 @@ export default function FoodsPage() {
               <div>
                 <div className="name">{f.name}</div>
                 <div className="muted small">
-                  {f.serving} · {f.calories} kcal · P{f.protein} C{f.carbs} F
-                  {f.fat}
+                  {f.serving} · {f.calories} kcal
+                </div>
+                <div className="small" style={{ marginTop: 2 }}>
+                  <span style={{ color: "var(--protein)" }}>P{f.protein}</span>{" "}
+                  <span style={{ color: "var(--carbs)" }}>C{f.carbs}</span>{" "}
+                  <span style={{ color: "var(--fat)" }}>F{f.fat}</span>
                 </div>
               </div>
               <button

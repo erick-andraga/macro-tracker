@@ -56,7 +56,7 @@ export default function TodayPage() {
 
       <div className="card">
         <div className="row" style={{ marginBottom: 8 }}>
-          <h2 style={{ margin: 0 }}>Logged ({todays.length})</h2>
+          <h2 style={{ margin: 0 }}>{todays.length} Food Consumed</h2>
         </div>
         {todays.length === 0 ? (
           <p className="empty">

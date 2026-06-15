@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useStore, todayStr } from "@/lib/store";
 import { entryTotals, goalMacros, round } from "@/lib/macros";
-import { MacroBars, CalorieRing } from "@/components/MacroDisplay";
+import { MacroBars, CalorieRing, CalorieBar } from "@/components/MacroDisplay";
 import Modal from "@/components/Modal";
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
@@ -74,11 +74,16 @@ export default function CalendarPage() {
   const selectedTotals = entryTotals(selectedEntries, foods);
   const foodMap = new Map(foods.map((f) => [f.id, f]));
 
-  // Monthly summary
-  const monthDates = cells.filter((c): c is number => c !== null);
-  const loggedDays = monthDates.filter((d) =>
-    byDate.has(fmt(new Date(year, month, d)))
-  ).length;
+  // Monthly average (over days that have at least one logged food)
+  const monthEntries = entries.filter((e) => e.date.startsWith(monthKey));
+  const loggedDays = new Set(monthEntries.map((e) => e.date)).size;
+  const monthTotals = entryTotals(monthEntries, foods);
+  const avg = {
+    calories: loggedDays ? monthTotals.calories / loggedDays : 0,
+    protein: loggedDays ? monthTotals.protein / loggedDays : 0,
+    carbs: loggedDays ? monthTotals.carbs / loggedDays : 0,
+    fat: loggedDays ? monthTotals.fat / loggedDays : 0,
+  };
 
   return (
     <div>
@@ -137,10 +142,22 @@ export default function CalendarPage() {
       </div>
 
       <div className="card">
-        <div className="row">
-          <span className="muted">Days logged this month</span>
-          <strong>{loggedDays}</strong>
+        <div className="row" style={{ marginBottom: 4 }}>
+          <h2 style={{ margin: 0 }}>Monthly average</h2>
+          <span className="pill">
+            {loggedDays} {loggedDays === 1 ? "day" : "days"}
+          </span>
         </div>
+        {loggedDays === 0 ? (
+          <p className="empty">No food logged this month.</p>
+        ) : (
+          <>
+            <div style={{ margin: "14px 0 18px" }}>
+              <CalorieBar consumed={avg.calories} goal={goal.calories} />
+            </div>
+            <MacroBars consumed={avg} goal={goal} />
+          </>
+        )}
       </div>
 
       <Modal
