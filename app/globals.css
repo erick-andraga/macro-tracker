@@ -498,3 +498,34 @@ hr.sep {
   border-top: 1px solid var(--border);
   margin: 14px 0;
 }
+
+/* Update-available toast */
+.update-toast {
+  position: fixed;
+  bottom: calc(var(--tabbar-h) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 448px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 80;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.update-toast button {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-text);
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}

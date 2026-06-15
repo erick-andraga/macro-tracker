@@ -4,6 +4,7 @@ import { StoreProvider } from "@/lib/store";
 import { AuthProvider } from "@/lib/auth";
 import AuthGate from "@/components/AuthGate";
 import TabBar from "@/components/TabBar";
+import ServiceWorker from "@/components/ServiceWorker";
 
 export const metadata: Metadata = {
   title: "Macro Tracker",
@@ -36,6 +37,7 @@ export default function RootLayout({
             </AuthGate>
           </StoreProvider>
         </AuthProvider>
+        <ServiceWorker />
       </body>
     </html>
   );
