@@ -45,7 +45,6 @@ export default function AddFoodForm({
         <label>Name</label>
         <input
           value={name}
-          autoFocus
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Turkey sandwich"
         />

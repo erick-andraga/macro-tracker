@@ -60,7 +60,6 @@ export default function QuickLogModal({
             <input
               className="search"
               placeholder="Search foods…"
-              autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               style={{ marginBottom: 0 }}
@@ -109,7 +108,6 @@ export default function QuickLogModal({
               min="0.25"
               step="0.25"
               inputMode="decimal"
-              autoFocus
               value={qty}
               onChange={(e) => setQty(e.target.value)}
             />

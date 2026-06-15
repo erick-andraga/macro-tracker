@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useStore } from "@/lib/store";
 
 function Icon({ name }: { name: string }) {
   const common = {
@@ -56,16 +57,20 @@ const tabs = [
 
 export default function TabBar() {
   const pathname = usePathname();
+  const { foods } = useStore();
   return (
     <nav className="tabbar">
       <div className="tabbar-inner">
         {tabs.map((t) => {
           const active =
             t.href === "/" ? pathname === "/" : pathname.startsWith(t.href);
+          const title =
+            t.href === "/foods" ? `${foods.length} foods registered` : t.label;
           return (
             <Link
               key={t.href}
               href={t.href}
+              title={title}
               className={`tab${active ? " active" : ""}`}
             >
               <span className="icon">

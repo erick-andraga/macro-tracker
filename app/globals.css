@@ -13,6 +13,11 @@
   --protein: #ff7a7a;
   --carbs: #ffc24b;
   --fat: #5fd0c5;
+  --protein-dark: #b94545;
+  --carbs-dark: #b8801f;
+  --fat-dark: #2f8c83;
+  --danger: #ef4444;
+  --danger-2: #f87171;
   --green: #5fe08a;
   --radius: 22px;
   --radius-sm: 14px;
@@ -114,9 +119,9 @@ button {
   border: 1px solid var(--border);
 }
 .btn-danger {
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--danger), var(--danger-2));
+  color: #fff;
+  border: none;
   border-radius: 999px;
 }
 

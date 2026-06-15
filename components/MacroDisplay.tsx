@@ -114,13 +114,20 @@ function Bar({
   value,
   goal,
   color,
+  darkColor,
 }: {
   label: string;
   value: number;
   goal: number;
   color: string;
+  darkColor: string;
 }) {
-  const pct = goal > 0 ? Math.min((value / goal) * 100, 100) : 0;
+  const over = value > goal && goal > 0;
+  // When over goal, the whole track is full: the goal portion uses the normal
+  // color and the excess portion uses a darker shade of the same color.
+  const denom = over ? value : goal || 1;
+  const normalW = (Math.min(value, goal) / denom) * 100;
+  const excessW = over ? ((value - goal) / denom) * 100 : 0;
   return (
     <div className="bar">
       <div className="row">
@@ -129,12 +136,19 @@ function Bar({
         </span>
         <span className="small muted">
           {round(value)} / {round(goal)} g
+          {over && (
+            <span style={{ color: darkColor }}> (+{round(value - goal)})</span>
+          )}
         </span>
       </div>
-      <div className="bar-track">
+      <div className="bar-track" style={{ display: "flex" }}>
         <div
           className="bar-fill"
-          style={{ width: `${pct}%`, background: color }}
+          style={{ width: `${normalW}%`, background: color, borderRadius: 0 }}
+        />
+        <div
+          className="bar-fill"
+          style={{ width: `${excessW}%`, background: darkColor, borderRadius: 0 }}
         />
       </div>
     </div>
@@ -150,9 +164,9 @@ export function MacroBars({
 }) {
   return (
     <div>
-      <Bar label="Protein" value={consumed.protein} goal={goal.protein} color="var(--protein)" />
-      <Bar label="Carbs" value={consumed.carbs} goal={goal.carbs} color="var(--carbs)" />
-      <Bar label="Fat" value={consumed.fat} goal={goal.fat} color="var(--fat)" />
+      <Bar label="Protein" value={consumed.protein} goal={goal.protein} color="var(--protein)" darkColor="var(--protein-dark)" />
+      <Bar label="Carbs" value={consumed.carbs} goal={goal.carbs} color="var(--carbs)" darkColor="var(--carbs-dark)" />
+      <Bar label="Fat" value={consumed.fat} goal={goal.fat} color="var(--fat)" darkColor="var(--fat-dark)" />
     </div>
   );
 }

@@ -17,7 +17,10 @@ const KEYS = {
   entries: "mt.entries",
   profile: "mt.profile",
   sampleEdits: "mt.sampleEdits",
+  snapshots: "mt.snapshots",
 };
+
+export const monthStr = (d = new Date()) => todayStr(d).slice(0, 7);
 
 interface StoreValue {
   ready: boolean;
@@ -31,6 +34,8 @@ interface StoreValue {
   removeEntry: (id: string) => void;
   setProfile: (p: Profile) => void;
   entriesFor: (date: string) => LogEntry[];
+  // Profile as it was for a given month ("YYYY-MM"); falls back to current.
+  profileForMonth: (month: string) => Profile;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -96,6 +101,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [sampleEdits, setSampleEdits] = useState<
     Record<string, Partial<Food>>
   >({});
+  // Per-month frozen profile snapshots ("YYYY-MM" -> Profile).
+  const [snapshots, setSnapshots] = useState<Record<string, Profile>>({});
 
   // Load data whenever the backend / user changes
   useEffect(() => {
@@ -126,10 +133,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         .from("entries")
         .select("*")
         .order("created_at", { ascending: false });
+      const { data: snaps } = await supabase!
+        .from("profile_snapshots")
+        .select("*");
 
       if (cancelled) return;
       setUserFoods((fds ?? []).map(foodFromRow));
       setEntries((ents ?? []).map(entryFromRow));
+      const snapMap: Record<string, Profile> = {};
+      for (const s of snaps ?? []) snapMap[s.month] = profileFromRow(s);
+      setSnapshots(snapMap);
       setReady(true);
     }
 
@@ -138,6 +151,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setUserFoods(load(KEYS.foods, []));
       setEntries(load(KEYS.entries, []));
       setProfileState(load(KEYS.profile, DEFAULT_PROFILE));
+      setSnapshots(load(KEYS.snapshots, {}));
       setReady(true);
     } else if (userId) {
       loadRemote();
@@ -146,6 +160,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setUserFoods([]);
       setEntries([]);
       setProfileState(DEFAULT_PROFILE);
+      setSnapshots({});
       setReady(true);
     }
 
@@ -167,11 +182,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseEnabled && ready)
       window.localStorage.setItem(KEYS.profile, JSON.stringify(profile));
   }, [profile, ready]);
+  useEffect(() => {
+    if (!supabaseEnabled && ready)
+      window.localStorage.setItem(KEYS.snapshots, JSON.stringify(snapshots));
+  }, [snapshots, ready]);
 
   // Load client-side sample edits once on mount
   useEffect(() => {
     setSampleEdits(load(KEYS.sampleEdits, {}));
   }, []);
+
+  // Freeze the current month's profile the first time we see this month, so
+  // later profile edits in a *new* month don't change this month's totals.
+  useEffect(() => {
+    if (!ready) return;
+    const m = monthStr();
+    if (snapshots[m]) return;
+    setSnapshots((prev) => ({ ...prev, [m]: profile }));
+    if (remote)
+      supabase!
+        .from("profile_snapshots")
+        .upsert({ user_id: userId, month: m, ...profileToRow(profile) })
+        .then(() => {});
+  }, [ready, snapshots, profile, remote, userId]);
 
   const foods = useMemo(
     () => [
@@ -258,15 +291,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
       setProfile: (p) => {
         setProfileState(p);
-        if (remote)
+        const m = monthStr();
+        // The current month tracks the latest profile; past months stay frozen.
+        setSnapshots((prev) => ({ ...prev, [m]: p }));
+        if (remote) {
           supabase!
             .from("profiles")
             .upsert({ user_id: userId, ...profileToRow(p) })
             .then(() => {});
+          supabase!
+            .from("profile_snapshots")
+            .upsert({ user_id: userId, month: m, ...profileToRow(p) })
+            .then(() => {});
+        }
       },
       entriesFor: (date) => entries.filter((e) => e.date === date),
+      profileForMonth: (month) => snapshots[month] ?? profile,
     }),
-    [ready, foods, userFoods, entries, profile, remote, userId]
+    [ready, foods, userFoods, entries, profile, snapshots, remote, userId]
   );
 
   return (
@@ -280,4 +322,4 @@ export function useStore() {
   return ctx;
 }
 
-export const todayStr = () => new Date().toISOString().slice(0, 10);
+export const todayStr = (d = new Date()) => d.toISOString().slice(0, 10);

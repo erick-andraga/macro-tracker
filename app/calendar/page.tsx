@@ -18,13 +18,19 @@ const fmt = (d: Date) =>
   ).padStart(2, "0")}`;
 
 export default function CalendarPage() {
-  const { ready, foods, entries, profile } = useStore();
+  const { ready, foods, entries, profileForMonth } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [selected, setSelected] = useState<string | null>(null);
 
-  const goal = useMemo(() => goalMacros(profile), [profile]);
+  // Goals use the profile snapshot for the month being viewed, so editing your
+  // current profile never changes past months.
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const goal = useMemo(
+    () => goalMacros(profileForMonth(monthKey)),
+    [profileForMonth, monthKey]
+  );
 
   // Map date -> calories consumed that day
   const byDate = useMemo(() => {

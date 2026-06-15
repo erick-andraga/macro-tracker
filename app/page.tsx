@@ -15,6 +15,7 @@ export default function TodayPage() {
   const [showLog, setShowLog] = useState(false);
   const [editing, setEditing] = useState<LogEntry | null>(null);
   const [editQty, setEditQty] = useState("1");
+  const [pendingDelete, setPendingDelete] = useState<LogEntry | null>(null);
 
   const openEdit = (e: LogEntry) => {
     setEditing(e);
@@ -89,7 +90,7 @@ export default function TodayPage() {
                   </button>
                   <button
                     className="btn btn-sm btn-danger"
-                    onClick={() => removeEntry(e.id)}
+                    onClick={() => setPendingDelete(e)}
                     aria-label="Remove"
                   >
                     ✕
@@ -136,7 +137,6 @@ export default function TodayPage() {
                     min="0.25"
                     step="0.25"
                     inputMode="decimal"
-                    autoFocus
                     value={editQty}
                     onChange={(ev) => setEditQty(ev.target.value)}
                   />
@@ -151,7 +151,7 @@ export default function TodayPage() {
                   <button
                     className="btn btn-danger"
                     onClick={() => {
-                      removeEntry(editing.id);
+                      setPendingDelete(editing);
                       setEditing(null);
                     }}
                   >
@@ -170,6 +170,41 @@ export default function TodayPage() {
               </div>
             );
           })()}
+      </Modal>
+
+      <Modal
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        title="Remove food?"
+      >
+        {pendingDelete && (
+          <div>
+            <p className="muted" style={{ marginTop: 0 }}>
+              Remove{" "}
+              <strong>
+                {foodMap.get(pendingDelete.foodId)?.name ?? "this food"}
+              </strong>{" "}
+              from today&apos;s log?
+            </p>
+            <div className="grid-2">
+              <button
+                className="btn btn-ghost"
+                onClick={() => setPendingDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={() => {
+                  removeEntry(pendingDelete.id);
+                  setPendingDelete(null);
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
