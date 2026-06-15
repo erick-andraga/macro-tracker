@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useStore, todayStr } from "@/lib/store";
 import { entryTotals, goalMacros, round } from "@/lib/macros";
-import { CalorieRing, MacroBars } from "@/components/MacroDisplay";
+import { CalorieBar, MacroBars } from "@/components/MacroDisplay";
 import QuickLogModal from "@/components/QuickLogModal";
 import Modal from "@/components/Modal";
 import type { LogEntry } from "@/lib/types";
@@ -45,7 +45,7 @@ export default function TodayPage() {
       </p>
 
       <div className="card">
-        <CalorieRing consumed={consumed.calories} goal={goal.calories} />
+        <CalorieBar consumed={consumed.calories} goal={goal.calories} />
       </div>
 
       <div className="card">
@@ -56,9 +56,6 @@ export default function TodayPage() {
       <div className="card">
         <div className="row" style={{ marginBottom: 8 }}>
           <h2 style={{ margin: 0 }}>Logged ({todays.length})</h2>
-          <button className="btn btn-sm" onClick={() => setShowLog(true)}>
-            + Add
-          </button>
         </div>
         {todays.length === 0 ? (
           <p className="empty">
@@ -103,6 +100,14 @@ export default function TodayPage() {
           </div>
         )}
       </div>
+
+      <button
+        className="fab"
+        onClick={() => setShowLog(true)}
+        aria-label="Add food"
+      >
+        +
+      </button>
 
       <QuickLogModal open={showLog} onClose={() => setShowLog(false)} />
 

@@ -305,25 +305,34 @@ label {
 .fab {
   position: fixed;
   bottom: calc(var(--tabbar-h) + 18px);
+  /* Anchor to the left edge of the centered 480px app column on desktop */
   left: 50%;
-  transform: translateX(calc(240px - 100% - 16px));
+  transform: translateX(calc(-240px + 16px));
   width: 56px;
   height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: var(--accent-text);
   border: none;
-  font-size: 1.7rem;
+  font-size: 1.9rem;
   font-weight: 700;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 49;
   box-shadow: 0 8px 24px rgba(59, 116, 245, 0.35);
 }
+.fab:active {
+  transform: translateX(calc(-240px + 16px)) scale(0.94);
+}
 @media (max-width: 512px) {
   .fab {
+    left: 18px;
     transform: none;
-    left: auto;
-    right: 18px;
+  }
+  .fab:active {
+    transform: scale(0.94);
   }
 }
 

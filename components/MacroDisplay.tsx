@@ -57,6 +57,58 @@ export function CalorieRing({
   );
 }
 
+export function CalorieBar({
+  consumed,
+  goal,
+}: {
+  consumed: number;
+  goal: number;
+}) {
+  const pct = goal > 0 ? Math.min((consumed / goal) * 100, 100) : 0;
+  const remaining = Math.round(goal - consumed);
+  const over = remaining < 0;
+  return (
+    <div>
+      <div className="row" style={{ alignItems: "flex-end", marginBottom: 12 }}>
+        <div>
+          <div className="muted small">Calories</div>
+          <div style={{ fontSize: "2rem", fontWeight: 700, lineHeight: 1.1 }}>
+            {round(consumed)}
+            <span
+              className="muted"
+              style={{ fontSize: "1rem", fontWeight: 500 }}
+            >
+              {" "}
+              / {round(goal)} kcal
+            </span>
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div className="muted small">{over ? "Over by" : "Remaining"}</div>
+          <div
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              color: over ? "var(--protein)" : "var(--text)",
+            }}
+          >
+            {Math.abs(remaining)}
+          </div>
+        </div>
+      </div>
+      <div className="bar-track" style={{ height: 16, marginTop: 0 }}>
+        <div
+          className="bar-fill"
+          style={{
+            width: `${pct}%`,
+            background: over ? "var(--protein)" : "var(--accent)",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function Bar({
   label,
   value,
