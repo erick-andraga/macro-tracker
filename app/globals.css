@@ -231,6 +231,17 @@ label {
 .list-item:last-child {
   border-bottom: none;
 }
+button.list-item {
+  width: 100%;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
 .list-item .name {
   font-weight: 600;
 }

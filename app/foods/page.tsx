@@ -57,7 +57,11 @@ export default function FoodsPage() {
           <p className="empty">No foods match “{query}”.</p>
         ) : (
           filtered.map((f) => (
-            <div className="list-item" key={f.id}>
+            <button
+              className="list-item"
+              key={f.id}
+              onClick={() => setEditing(f)}
+            >
               <div>
                 <div className="name">{f.name}</div>
                 <div className="muted small">
@@ -73,13 +77,10 @@ export default function FoodsPage() {
                   <span style={{ color: "var(--fat)" }}>Fat {f.fat}g</span>
                 </div>
               </div>
-              <button
-                className="btn btn-sm btn-ghost"
-                onClick={() => setEditing(f)}
-              >
-                Edit
-              </button>
-            </div>
+              <span className="muted" style={{ fontSize: "1.2rem" }}>
+                ›
+              </span>
+            </button>
           ))
         )}
       </div>

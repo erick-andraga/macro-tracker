@@ -95,6 +95,8 @@ export const lbToKg = (lb: number) => lb * 0.45359237;
 export const kgToLb = (kg: number) => kg / 0.45359237;
 export const inToCm = (inches: number) => inches * 2.54;
 export const cmToIn = (cm: number) => cm / 2.54;
+export const ftToCm = (ft: number) => ft * 30.48;
+export const cmToFt = (cm: number) => cm / 30.48;
 
 export function entryTotals(
   entries: LogEntry[],

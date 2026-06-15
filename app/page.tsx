@@ -56,7 +56,7 @@ export default function TodayPage() {
 
       <div className="card">
         <div className="row" style={{ marginBottom: 8 }}>
-          <h2 style={{ margin: 0 }}>{todays.length} Food Consumed</h2>
+          <h2 style={{ margin: 0 }}>{todays.length} Items Consumed</h2>
         </div>
         {todays.length === 0 ? (
           <p className="empty">
@@ -87,13 +87,6 @@ export default function TodayPage() {
                       {e.quantity} × {f.serving} ·{" "}
                       {round(f.calories * e.quantity)} kcal
                     </div>
-                  </button>
-                  <button
-                    className="btn btn-sm btn-x"
-                    onClick={() => setPendingDelete(e)}
-                    aria-label="Remove"
-                  >
-                    ×
                   </button>
                 </div>
               );

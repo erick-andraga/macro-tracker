@@ -139,7 +139,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       if (cancelled) return;
       setUserFoods((fds ?? []).map(foodFromRow));
-      setEntries((ents ?? []).map(entryFromRow));
+
+      // One-time correction for the old UTC bug: re-date each entry to the
+      // California day it was actually created. Idempotent (no-op once fixed).
+      const rows = ents ?? [];
+      const corrections = new Map<string, string>();
+      for (const r of rows) {
+        if (!r.created_at) continue;
+        const laDate = todayStr(new Date(r.created_at));
+        if (r.date !== laDate) corrections.set(r.id, laDate);
+      }
+      setEntries(
+        rows.map((r) => {
+          const e = entryFromRow(r);
+          const fix = corrections.get(r.id);
+          return fix ? { ...e, date: fix } : e;
+        })
+      );
+      for (const [id, date] of corrections)
+        supabase!.from("entries").update({ date }).eq("id", id).then(() => {});
+
       const snapMap: Record<string, Profile> = {};
       for (const s of snaps ?? []) snapMap[s.month] = profileFromRow(s);
       setSnapshots(snapMap);
@@ -322,4 +341,11 @@ export function useStore() {
   return ctx;
 }
 
-export const todayStr = (d = new Date()) => d.toISOString().slice(0, 10);
+// Date string (YYYY-MM-DD) in California time, regardless of device/UTC.
+export const todayStr = (d = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);

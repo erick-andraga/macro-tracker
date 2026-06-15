@@ -6,11 +6,11 @@ import { useAuth } from "@/lib/auth";
 import {
   ACTIVITY_LABELS,
   bmr,
-  cmToIn,
+  cmToFt,
   FAT_PCT,
+  ftToCm,
   goalCalories,
   goalMacros,
-  inToCm,
   kgToLb,
   lbToKg,
   normThreshold,
@@ -26,7 +26,7 @@ import {
 } from "@/lib/types";
 
 type WeightUnit = "kg" | "lb";
-type HeightUnit = "cm" | "in";
+type HeightUnit = "cm" | "ft";
 
 export default function ProfilePage() {
   const { ready, profile, setProfile } = useStore();
@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const [wUnit, setWUnit] = useState<WeightUnit>("kg");
   const [hUnit, setHUnit] = useState<HeightUnit>("cm");
   const [saved, setSaved] = useState(false);
+  const [showFormula, setShowFormula] = useState(false);
 
   useEffect(() => {
     if (ready) setDraft(profile);
@@ -56,7 +57,7 @@ export default function ProfilePage() {
   const heightDisplay =
     hUnit === "cm"
       ? draft.heightCm.toFixed(0)
-      : cmToIn(draft.heightCm).toFixed(1);
+      : cmToFt(draft.heightCm).toFixed(2);
 
   const onWeight = (val: string) => {
     const n = parseFloat(val) || 0;
@@ -64,7 +65,7 @@ export default function ProfilePage() {
   };
   const onHeight = (val: string) => {
     const n = parseFloat(val) || 0;
-    set("heightCm", hUnit === "cm" ? n : inToCm(n));
+    set("heightCm", hUnit === "cm" ? n : ftToCm(n));
   };
 
   const save = () => {
@@ -84,7 +85,43 @@ export default function ProfilePage() {
       </p>
 
       <div className="card">
-        <h2>Calculated goals</h2>
+        <div
+          className="row"
+          style={{ cursor: "pointer", marginBottom: 14 }}
+          onClick={() => setShowFormula((s) => !s)}
+          onMouseEnter={() => setShowFormula(true)}
+          title="Tap to see how this is calculated"
+        >
+          <h2 style={{ margin: 0 }}>Calculated goals</h2>
+          <span className="pill">{showFormula ? "hide" : "ⓘ formula"}</span>
+        </div>
+
+        {showFormula && (
+          <div
+            className="card"
+            style={{ background: "var(--surface-2)", marginBottom: 14 }}
+          >
+            <p className="small muted" style={{ margin: "0 0 8px" }}>
+              <strong>BMR</strong> (Mifflin-St Jeor):{" "}
+              {draft.sex === "male"
+                ? "10·kg + 6.25·cm − 5·age + 5"
+                : "10·kg + 6.25·cm − 5·age − 161"}
+            </p>
+            <p className="small muted" style={{ margin: "0 0 8px" }}>
+              <strong>TDEE</strong> = BMR × activity ({ACTIVITY_LABELS[draft.activity].split(" ")[0].toLowerCase()})
+            </p>
+            <p className="small muted" style={{ margin: "0 0 8px" }}>
+              <strong>Target</strong> = TDEE{" "}
+              {draft.goal === "cut" ? "− 500" : draft.goal === "bulk" ? "+ 300" : "± 0"}{" "}
+              ({draft.goal})
+            </p>
+            <p className="small muted" style={{ margin: 0 }}>
+              <strong>Macros</strong>: protein {PROTEIN_PER_KG[th]} g/kg ·
+              fat {Math.round(FAT_PCT[th] * 100)}% of kcal · carbs = remainder
+            </p>
+          </div>
+        )}
+
         <div className="row">
           <span className="muted">BMR (Mifflin-St Jeor)</span>
           <strong>{Math.round(bmr(draft))} kcal</strong>
@@ -120,17 +157,7 @@ export default function ProfilePage() {
 
       <div className="card">
         <div className="field">
-          <label>Age</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={draft.age}
-            onChange={(e) => set("age", parseInt(e.target.value) || 0)}
-          />
-        </div>
-
-        <div className="field">
-          <label>Sex</label>
+          <label>Gender</label>
           <div className="toggle">
             {(["male", "female"] as Sex[]).map((s) => (
               <button
@@ -142,6 +169,16 @@ export default function ProfilePage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="field">
+          <label>Age</label>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={draft.age}
+            onChange={(e) => set("age", parseInt(e.target.value) || 0)}
+          />
         </div>
 
         <div className="field">
@@ -171,7 +208,7 @@ export default function ProfilePage() {
           <div className="row" style={{ marginBottom: 6 }}>
             <label style={{ margin: 0 }}>Height</label>
             <div className="toggle">
-              {(["cm", "in"] as HeightUnit[]).map((u) => (
+              {(["cm", "ft"] as HeightUnit[]).map((u) => (
                 <button
                   key={u}
                   className={hUnit === u ? "on" : ""}
