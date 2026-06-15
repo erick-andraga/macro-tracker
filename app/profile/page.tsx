@@ -7,16 +7,20 @@ import {
   ACTIVITY_LABELS,
   bmr,
   cmToIn,
+  FAT_PCT,
   goalCalories,
   goalMacros,
   inToCm,
   kgToLb,
   lbToKg,
+  normThreshold,
+  PROTEIN_PER_KG,
   tdee,
 } from "@/lib/macros";
 import {
   ActivityLevel,
   GoalType,
+  MacroThreshold,
   Profile,
   Sex,
 } from "@/lib/types";
@@ -70,6 +74,7 @@ export default function ProfilePage() {
   };
 
   const macros = goalMacros(draft);
+  const th = normThreshold(draft.threshold);
 
   return (
     <div>
@@ -186,6 +191,32 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        <div className="field">
+          <label>Macro threshold</label>
+          <div className="toggle" style={{ display: "flex", width: "100%" }}>
+            {(
+              [
+                ["lower", "Lower"],
+                ["mid", "Mid"],
+                ["high", "High"],
+              ] as [MacroThreshold, string][]
+            ).map(([t, label]) => (
+              <button
+                key={t}
+                style={{ flex: 1 }}
+                className={th === t ? "on" : ""}
+                onClick={() => set("threshold", t)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="small muted" style={{ marginTop: 8, marginBottom: 0 }}>
+            {PROTEIN_PER_KG[th]} g/kg protein ·{" "}
+            {Math.round(FAT_PCT[th] * 100)}% fat · rest carbs
+          </p>
+        </div>
+
         <button className="btn" onClick={save}>
           {saved ? "✅ Saved" : "Save profile"}
         </button>
@@ -221,7 +252,8 @@ export default function ProfilePage() {
           <strong>{macros.fat} g</strong>
         </div>
         <p className="small muted" style={{ marginTop: 12, marginBottom: 0 }}>
-          Split: 30% protein · 40% carbs · 30% fat
+          {PROTEIN_PER_KG[th]} g/kg protein ·{" "}
+          {Math.round(FAT_PCT[th] * 100)}% fat · rest carbs
         </p>
       </div>
 

@@ -12,8 +12,13 @@ create table if not exists public.profiles (
   height_cm  numeric not null default 178,
   activity   text    not null default 'moderate',
   goal       text    not null default 'maintain',
+  threshold  text    not null default 'mid',
   updated_at timestamptz not null default now()
 );
+
+-- Add the macro-threshold column to existing tables (safe to re-run).
+alter table public.profiles
+  add column if not exists threshold text not null default 'mid';
 
 -- ---------------------------------------------------------------------------
 -- foods: user-created foods (built-in sample foods live in the app code)

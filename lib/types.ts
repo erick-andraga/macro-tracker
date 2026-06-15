@@ -9,6 +9,8 @@ export type ActivityLevel =
 
 export type GoalType = "cut" | "maintain" | "bulk";
 
+export type MacroThreshold = "lower" | "mid" | "high";
+
 export interface Food {
   id: string;
   name: string;
@@ -33,6 +35,7 @@ export interface Profile {
   heightCm: number;
   activity: ActivityLevel;
   goal: GoalType;
+  threshold: MacroThreshold;
 }
 
 export interface MacroTotals {

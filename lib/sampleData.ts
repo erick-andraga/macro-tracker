@@ -22,4 +22,5 @@ export const DEFAULT_PROFILE: Profile = {
   heightCm: 178,
   activity: "moderate",
   goal: "maintain",
+  threshold: "mid",
 };

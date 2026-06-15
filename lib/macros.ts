@@ -1,7 +1,9 @@
 import {
   ActivityLevel,
   Food,
+  GoalType,
   LogEntry,
+  MacroThreshold,
   MacroTotals,
   Profile,
 } from "./types";
@@ -33,25 +35,59 @@ export function tdee(p: Profile): number {
   return bmr(p) * ACTIVITY_FACTORS[p.activity];
 }
 
-const GOAL_OFFSET: Record<Profile["goal"], number> = {
+// --- Dimension 1: calorie goal (cut / maintain / bulk) ---
+const GOAL_OFFSET: Record<GoalType, number> = {
   cut: -500,
   maintain: 0,
   bulk: 300,
+};
+
+export const GOAL_LABELS: Record<GoalType, string> = {
+  cut: "Cut",
+  maintain: "Maintain",
+  bulk: "Bulk",
 };
 
 export function goalCalories(p: Profile): number {
   return Math.max(1200, Math.round(tdee(p) + GOAL_OFFSET[p.goal]));
 }
 
-// Default macro split: 30% protein / 40% carbs / 30% fat
+// --- Dimension 2: macro threshold (lower / mid / high) ---
+export const THRESHOLD_LABELS: Record<MacroThreshold, string> = {
+  lower: "Lower",
+  mid: "Mid",
+  high: "High",
+};
+
+// Protein target in grams per kg of bodyweight.
+export const PROTEIN_PER_KG: Record<MacroThreshold, number> = {
+  lower: 1,
+  mid: 1.6,
+  high: 2,
+};
+
+// Fat as a share of total calories — inverse to protein (more protein -> less fat).
+export const FAT_PCT: Record<MacroThreshold, number> = {
+  lower: 0.4,
+  mid: 0.3,
+  high: 0.2,
+};
+
+// Normalize legacy/missing threshold values read from older data.
+export function normThreshold(t: string | undefined): MacroThreshold {
+  return t === "lower" || t === "mid" || t === "high" ? t : "mid";
+}
+
+// Macros: calories from the goal, protein from g/kg, fat from % of calories,
+// carbs fill the remainder.
 export function goalMacros(p: Profile): MacroTotals {
+  const t = normThreshold(p.threshold);
   const cals = goalCalories(p);
-  return {
-    calories: cals,
-    protein: Math.round((cals * 0.3) / 4),
-    carbs: Math.round((cals * 0.4) / 4),
-    fat: Math.round((cals * 0.3) / 9),
-  };
+  const protein = Math.round(PROTEIN_PER_KG[t] * p.weightKg);
+  const fatCals = FAT_PCT[t] * cals;
+  const fat = Math.round(fatCals / 9);
+  const carbs = Math.max(0, Math.round((cals - protein * 4 - fatCals) / 4));
+  return { calories: cals, protein, carbs, fat };
 }
 
 // Unit helpers

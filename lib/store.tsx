@@ -69,6 +69,7 @@ const profileFromRow = (r: any): Profile => ({
   heightCm: Number(r.height_cm),
   activity: r.activity,
   goal: r.goal,
+  threshold: r.threshold ?? "mid",
 });
 const profileToRow = (p: Profile) => ({
   age: p.age,
@@ -77,6 +78,7 @@ const profileToRow = (p: Profile) => ({
   height_cm: p.heightCm,
   activity: p.activity,
   goal: p.goal,
+  threshold: p.threshold,
 });
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
