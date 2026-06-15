@@ -33,8 +33,8 @@ export default function ProfilePage() {
   const { enabled, user, signOut } = useAuth();
 
   const [draft, setDraft] = useState<Profile>(profile);
-  const [wUnit, setWUnit] = useState<WeightUnit>("lb");
-  const [hUnit, setHUnit] = useState<HeightUnit>("in");
+  const [wUnit, setWUnit] = useState<WeightUnit>("kg");
+  const [hUnit, setHUnit] = useState<HeightUnit>("cm");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function ProfilePage() {
           <div className="row" style={{ marginBottom: 6 }}>
             <label style={{ margin: 0 }}>Weight</label>
             <div className="toggle">
-              {(["lb", "kg"] as WeightUnit[]).map((u) => (
+              {(["kg", "lb"] as WeightUnit[]).map((u) => (
                 <button
                   key={u}
                   className={wUnit === u ? "on" : ""}
@@ -136,7 +136,7 @@ export default function ProfilePage() {
           <div className="row" style={{ marginBottom: 6 }}>
             <label style={{ margin: 0 }}>Height</label>
             <div className="toggle">
-              {(["in", "cm"] as HeightUnit[]).map((u) => (
+              {(["cm", "in"] as HeightUnit[]).map((u) => (
                 <button
                   key={u}
                   className={hUnit === u ? "on" : ""}

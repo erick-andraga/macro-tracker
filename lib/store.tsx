@@ -16,6 +16,7 @@ const KEYS = {
   foods: "mt.foods",
   entries: "mt.entries",
   profile: "mt.profile",
+  sampleEdits: "mt.sampleEdits",
 };
 
 interface StoreValue {
@@ -24,6 +25,7 @@ interface StoreValue {
   entries: LogEntry[];
   profile: Profile;
   addFood: (f: Omit<Food, "id">) => Promise<Food> | Food;
+  updateFood: (id: string, f: Omit<Food, "id">) => void;
   logFood: (foodId: string, quantity: number, date: string) => void;
   updateEntry: (id: string, quantity: number) => void;
   removeEntry: (id: string) => void;
@@ -90,6 +92,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [userFoods, setUserFoods] = useState<Food[]>([]);
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [profile, setProfileState] = useState<Profile>(DEFAULT_PROFILE);
+  // Edits to built-in sample foods, kept client-side (samples aren't in the DB).
+  const [sampleEdits, setSampleEdits] = useState<
+    Record<string, Partial<Food>>
+  >({});
 
   // Load data whenever the backend / user changes
   useEffect(() => {
@@ -162,7 +168,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.setItem(KEYS.profile, JSON.stringify(profile));
   }, [profile, ready]);
 
-  const foods = useMemo(() => [...SAMPLE_FOODS, ...userFoods], [userFoods]);
+  // Load client-side sample edits once on mount
+  useEffect(() => {
+    setSampleEdits(load(KEYS.sampleEdits, {}));
+  }, []);
+
+  const foods = useMemo(
+    () => [
+      ...SAMPLE_FOODS.map((f) =>
+        sampleEdits[f.id] ? { ...f, ...sampleEdits[f.id] } : f
+      ),
+      ...userFoods,
+    ],
+    [userFoods, sampleEdits]
+  );
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -189,6 +208,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const food: Food = { ...f, id: newId() };
         setUserFoods((p) => [food, ...p]);
         return food;
+      },
+      updateFood: (id, f) => {
+        const isUserFood = userFoods.some((x) => x.id === id);
+        if (isUserFood) {
+          setUserFoods((p) =>
+            p.map((x) => (x.id === id ? { ...f, id } : x))
+          );
+          if (remote)
+            supabase!.from("foods").update(f).eq("id", id).then(() => {});
+        } else {
+          // Built-in sample food: store an override locally (samples aren't in DB)
+          setSampleEdits((prev) => {
+            const next = { ...prev, [id]: f };
+            window.localStorage.setItem(KEYS.sampleEdits, JSON.stringify(next));
+            return next;
+          });
+        }
       },
       logFood: (foodId, quantity, date) => {
         if (remote) {
@@ -230,7 +266,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
       entriesFor: (date) => entries.filter((e) => e.date === date),
     }),
-    [ready, foods, entries, profile, remote, userId]
+    [ready, foods, userFoods, entries, profile, remote, userId]
   );
 
   return (

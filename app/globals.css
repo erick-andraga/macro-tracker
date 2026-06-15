@@ -305,9 +305,9 @@ label {
 .fab {
   position: fixed;
   bottom: calc(var(--tabbar-h) + 18px);
-  /* Anchor to the left edge of the centered 480px app column on desktop */
+  /* Anchor to the right edge of the centered 480px app column on desktop */
   left: 50%;
-  transform: translateX(calc(-240px + 16px));
+  transform: translateX(calc(240px - 100% - 16px));
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -324,11 +324,12 @@ label {
   box-shadow: 0 8px 24px rgba(59, 116, 245, 0.35);
 }
 .fab:active {
-  transform: translateX(calc(-240px + 16px)) scale(0.94);
+  transform: translateX(calc(240px - 100% - 16px)) scale(0.94);
 }
 @media (max-width: 512px) {
   .fab {
-    left: 18px;
+    left: auto;
+    right: 18px;
     transform: none;
   }
   .fab:active {

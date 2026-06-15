@@ -6,16 +6,24 @@ import { Food } from "@/lib/types";
 export default function AddFoodForm({
   onAdd,
   onCancel,
+  initial,
+  submitLabel = "Save food",
 }: {
   onAdd: (f: Omit<Food, "id">) => void;
   onCancel: () => void;
+  initial?: Food;
+  submitLabel?: string;
 }) {
-  const [name, setName] = useState("");
-  const [serving, setServing] = useState("");
-  const [calories, setCalories] = useState("");
-  const [protein, setProtein] = useState("");
-  const [carbs, setCarbs] = useState("");
-  const [fat, setFat] = useState("");
+  const [name, setName] = useState(initial?.name ?? "");
+  const [serving, setServing] = useState(initial?.serving ?? "");
+  const [calories, setCalories] = useState(
+    initial ? String(initial.calories) : ""
+  );
+  const [protein, setProtein] = useState(
+    initial ? String(initial.protein) : ""
+  );
+  const [carbs, setCarbs] = useState(initial ? String(initial.carbs) : "");
+  const [fat, setFat] = useState(initial ? String(initial.fat) : "");
 
   const num = (s: string) => parseFloat(s) || 0;
 
@@ -73,7 +81,7 @@ export default function AddFoodForm({
           Cancel
         </button>
         <button className="btn" onClick={submit}>
-          Save food
+          {submitLabel}
         </button>
       </div>
     </div>
