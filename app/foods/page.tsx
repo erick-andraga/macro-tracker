@@ -6,20 +6,63 @@ import { Food } from "@/lib/types";
 import Modal from "@/components/Modal";
 import AddFoodForm from "@/components/AddFoodForm";
 
+type SortKey = "name" | "popularity" | "kcal" | "protein" | "carbs" | "fat";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  name: "Name",
+  popularity: "Popularity",
+  kcal: "Calories",
+  protein: "Protein",
+  carbs: "Carbs",
+  fat: "Fat",
+};
+
 export default function FoodsPage() {
-  const { ready, foods, addFood, updateFood } = useStore();
+  const { ready, foods, entries, addFood, updateFood } = useStore();
   const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortKey>("name");
   const [editing, setEditing] = useState<Food | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      foods.filter((f) =>
-        f.name.toLowerCase().includes(query.trim().toLowerCase())
-      ),
-    [foods, query]
-  );
+  // How many times each item has been logged (for popularity sort).
+  const popularity = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of entries) m.set(e.foodId, (m.get(e.foodId) ?? 0) + 1);
+    return m;
+  }, [entries]);
+
+  const items = useMemo(() => {
+    // Remove duplicates by name (case-insensitive), keep first occurrence.
+    const seen = new Set<string>();
+    const unique: Food[] = [];
+    for (const f of foods) {
+      const key = f.name.trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(f);
+    }
+    const q = query.trim().toLowerCase();
+    const list = unique.filter((f) => f.name.toLowerCase().includes(q));
+    const pop = (f: Food) => popularity.get(f.id) ?? 0;
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case "popularity":
+          return pop(b) - pop(a) || a.name.localeCompare(b.name);
+        case "kcal":
+          return b.calories - a.calories;
+        case "protein":
+          return b.protein - a.protein;
+        case "carbs":
+          return b.carbs - a.carbs;
+        case "fat":
+          return b.fat - a.fat;
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+    return list;
+  }, [foods, query, sortBy, popularity]);
 
   if (!ready) return <p className="muted">Loading…</p>;
 
@@ -30,9 +73,9 @@ export default function FoodsPage() {
 
   return (
     <div>
-      <h1>Foods</h1>
+      <h1>Items</h1>
       <p className="muted" style={{ marginTop: 0 }}>
-        Tap a food to edit it.
+        Tap an item to edit it.
       </p>
 
       {toast && (
@@ -46,17 +89,31 @@ export default function FoodsPage() {
 
       <input
         className="search"
-        placeholder="Search foods…"
+        placeholder="Search items…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        style={{ marginTop: 12 }}
+        style={{ marginTop: 12, marginBottom: 10 }}
       />
 
+      <div className="row" style={{ marginBottom: 14, gap: 8 }}>
+        <label style={{ margin: 0, flexShrink: 0 }}>Sort by</label>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortKey)}
+        >
+          {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+            <option key={k} value={k}>
+              {SORT_LABELS[k]}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="card">
-        {filtered.length === 0 ? (
-          <p className="empty">No foods match “{query}”.</p>
+        {items.length === 0 ? (
+          <p className="empty">No items match “{query}”.</p>
         ) : (
-          filtered.map((f) => (
+          items.map((f) => (
             <button
               className="list-item"
               key={f.id}
@@ -66,6 +123,9 @@ export default function FoodsPage() {
                 <div className="name">{f.name}</div>
                 <div className="muted small">
                   {f.serving} · {f.calories} kcal
+                  {sortBy === "popularity" && (
+                    <> · logged {popularity.get(f.id) ?? 0}×</>
+                  )}
                 </div>
                 <div className="small" style={{ marginTop: 2 }}>
                   <span style={{ color: "var(--protein)" }}>
@@ -88,12 +148,12 @@ export default function FoodsPage() {
       <button
         className="fab"
         onClick={() => setShowAdd(true)}
-        aria-label="New food"
+        aria-label="New item"
       >
         +
       </button>
 
-      {/* Floating popup: edit a food */}
+      {/* Floating popup: edit an item */}
       <Modal
         open={!!editing}
         onClose={() => setEditing(null)}
@@ -113,13 +173,13 @@ export default function FoodsPage() {
         )}
       </Modal>
 
-      {/* Floating popup: create a new food */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="New food">
+      {/* Floating popup: create a new item */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="New item">
         <AddFoodForm
           onAdd={(f) => {
             addFood(f);
             setShowAdd(false);
-            flash(`Added "${f.name}" to your foods`);
+            flash(`Added "${f.name}" to your items`);
           }}
           onCancel={() => setShowAdd(false)}
         />

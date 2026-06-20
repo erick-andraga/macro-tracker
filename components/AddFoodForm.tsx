@@ -7,7 +7,7 @@ export default function AddFoodForm({
   onAdd,
   onCancel,
   initial,
-  submitLabel = "Save food",
+  submitLabel = "Save item",
 }: {
   onAdd: (f: Omit<Food, "id">) => void;
   onCancel: () => void;

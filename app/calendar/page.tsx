@@ -172,7 +172,7 @@ export default function CalendarPage() {
           </span>
         </div>
         {loggedDays === 0 ? (
-          <p className="empty">No food logged this month.</p>
+          <p className="empty">No items logged this month.</p>
         ) : (
           <>
             <div style={{ margin: "14px 0 18px" }}>
