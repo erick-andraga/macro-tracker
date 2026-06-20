@@ -18,8 +18,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 export default function FoodsPage() {
-  const { ready, foods, entries, addFood, updateFood, cleanupFoods } =
-    useStore();
+  const { ready, foods, entries, addFood, updateFood } = useStore();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("name");
   const [editing, setEditing] = useState<Food | null>(null);
@@ -76,15 +75,6 @@ export default function FoodsPage() {
     foods.some(
       (f) => f.id !== exceptId && f.name.trim().toLowerCase() === lower
     );
-
-  const cleanup = () => {
-    const n = cleanupFoods();
-    flash(
-      n > 0
-        ? `Removed ${n} unused food${n > 1 ? "s" : ""}.`
-        : "No unused foods to remove."
-    );
-  };
 
   return (
     <div>
@@ -157,14 +147,6 @@ export default function FoodsPage() {
           ))
         )}
       </div>
-
-      <button
-        className="btn btn-ghost"
-        onClick={cleanup}
-        style={{ fontSize: "0.85rem" }}
-      >
-        Remove unused foods
-      </button>
 
       <button
         className="fab"
