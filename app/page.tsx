@@ -8,10 +8,18 @@ import QuickLogModal from "@/components/QuickLogModal";
 import Modal from "@/components/Modal";
 import type { LogEntry } from "@/lib/types";
 
+// Shift a YYYY-MM-DD calendar date by N days (timezone-independent).
+const shiftDate = (ds: string, delta: number) => {
+  const [y, m, d] = ds.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + delta);
+  return dt.toISOString().slice(0, 10);
+};
+
 export default function TodayPage() {
-  const { ready, foods, profile, entriesFor, updateEntry, removeEntry } =
+  const { ready, foods, entriesFor, profileForMonth, updateEntry, removeEntry } =
     useStore();
-  const date = todayStr();
+  const [date, setDate] = useState(todayStr());
   const [showLog, setShowLog] = useState(false);
   const [editing, setEditing] = useState<LogEntry | null>(null);
   const [editQty, setEditQty] = useState("1");
@@ -27,23 +35,49 @@ export default function TodayPage() {
     [ready, date, entriesFor]
   );
   const consumed = useMemo(() => entryTotals(todays, foods), [todays, foods]);
-  const goal = useMemo(() => goalMacros(profile), [profile]);
+  const goal = useMemo(
+    () => goalMacros(profileForMonth(date.slice(0, 7))),
+    [profileForMonth, date]
+  );
   const foodMap = useMemo(() => new Map(foods.map((f) => [f.id, f])), [foods]);
 
   if (!ready) return <p className="muted">Loading…</p>;
 
-  const prettyDate = new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
+  const today = todayStr();
+  const canGoNext = date < today;
+  const isToday = date === today;
+  const isYesterday = date === shiftDate(today, -1);
+  const [y, m, d] = date.split("-").map(Number);
+  const fullDate = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(
+    undefined,
+    { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" }
+  );
+  const label = isToday ? "Today" : isYesterday ? "Yesterday" : fullDate;
 
   return (
     <div>
-      <h1>Today</h1>
-      <p className="muted" style={{ marginTop: 0 }}>
-        {prettyDate}
-      </p>
+      <div className="cal-head" style={{ marginBottom: 16 }}>
+        <button
+          className="cal-nav"
+          onClick={() => setDate((ds) => shiftDate(ds, -1))}
+          aria-label="Previous day"
+        >
+          ‹
+        </button>
+        <div style={{ textAlign: "center" }}>
+          <h1 style={{ margin: 0, fontSize: "1.4rem" }}>{label}</h1>
+          {!isToday && <div className="muted small">{fullDate}</div>}
+        </div>
+        <button
+          className="cal-nav"
+          onClick={() => canGoNext && setDate((ds) => shiftDate(ds, 1))}
+          disabled={!canGoNext}
+          aria-label="Next day"
+          style={{ opacity: canGoNext ? 1 : 0.3 }}
+        >
+          ›
+        </button>
+      </div>
 
       <div className="card">
         <CalorieBar consumed={consumed.calories} goal={goal.calories} />
@@ -103,7 +137,11 @@ export default function TodayPage() {
         +
       </button>
 
-      <QuickLogModal open={showLog} onClose={() => setShowLog(false)} />
+      <QuickLogModal
+        open={showLog}
+        onClose={() => setShowLog(false)}
+        date={date}
+      />
 
       <Modal
         open={!!editing}
@@ -177,7 +215,7 @@ export default function TodayPage() {
               <strong>
                 {foodMap.get(pendingDelete.foodId)?.name ?? "this food"}
               </strong>{" "}
-              from today&apos;s log?
+              from this day&apos;s log?
             </p>
             <div className="grid-2">
               <button
