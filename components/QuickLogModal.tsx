@@ -65,11 +65,21 @@ export default function QuickLogModal({
               style={{ marginBottom: 0 }}
             />
             <button
-              className="btn btn-sm"
-              style={{ flexShrink: 0 }}
+              className="btn"
+              style={{
+                flexShrink: 0,
+                width: 46,
+                height: 46,
+                padding: 0,
+                borderRadius: 12,
+                fontSize: "1.5rem",
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
               onClick={() => setShowCreate(true)}
+              aria-label="New food"
             >
-              + New
+              +
             </button>
           </div>
           <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
@@ -77,20 +87,17 @@ export default function QuickLogModal({
               <p className="empty">No foods match “{query}”.</p>
             ) : (
               filtered.map((f) => (
-                <div className="list-item" key={f.id}>
+                <button className="list-item" key={f.id} onClick={() => pick(f)}>
                   <div>
                     <div className="name">{f.name}</div>
                     <div className="muted small">
                       {f.serving} · {f.calories} kcal
                     </div>
                   </div>
-                  <button
-                    className="btn btn-sm btn-ghost"
-                    onClick={() => pick(f)}
-                  >
-                    Select
-                  </button>
-                </div>
+                  <span className="muted" style={{ fontSize: "1.2rem" }}>
+                    ›
+                  </span>
+                </button>
               ))
             )}
           </div>

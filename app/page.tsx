@@ -119,7 +119,18 @@ export default function TodayPage() {
                     <div className="name">{f.name}</div>
                     <div className="muted small">
                       {e.quantity} × {f.serving} ·{" "}
-                      {round(f.calories * e.quantity)} kcal
+                      {round(f.calories * e.quantity)} kcal ·{" "}
+                      <span style={{ color: "var(--protein)" }}>
+                        {round(f.protein * e.quantity)}
+                      </span>
+                      <span className="muted"> / </span>
+                      <span style={{ color: "var(--carbs)" }}>
+                        {round(f.carbs * e.quantity)}
+                      </span>
+                      <span className="muted"> / </span>
+                      <span style={{ color: "var(--fat)" }}>
+                        {round(f.fat * e.quantity)}
+                      </span>
                     </div>
                   </button>
                 </div>

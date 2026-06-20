@@ -49,7 +49,7 @@ function Icon({ name }: { name: string }) {
 }
 
 const tabs = [
-  { href: "/", label: "Today", icon: "today" },
+  { href: "/", label: "Track", icon: "today" },
   { href: "/foods", label: "Foods", icon: "foods" },
   { href: "/calendar", label: "History", icon: "history" },
   { href: "/profile", label: "Profile", icon: "profile" },
