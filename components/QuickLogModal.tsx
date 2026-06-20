@@ -52,14 +52,14 @@ export default function QuickLogModal({
     <Modal
       open={open}
       onClose={close}
-      title={picked ? `Add ${picked.name}` : "Add item"}
+      title={picked ? `Add ${picked.name}` : "Add food"}
     >
       {!picked ? (
         <div>
           <div className="row" style={{ marginBottom: 12, gap: 8 }}>
             <input
               className="search"
-              placeholder="Search items…"
+              placeholder="Search foods…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               style={{ marginBottom: 0 }}
@@ -77,14 +77,14 @@ export default function QuickLogModal({
                 lineHeight: 1,
               }}
               onClick={() => setShowCreate(true)}
-              aria-label="New item"
+              aria-label="New food"
             >
               +
             </button>
           </div>
           <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
             {filtered.length === 0 ? (
-              <p className="empty">No items match “{query}”.</p>
+              <p className="empty">No foods match “{query}”.</p>
             ) : (
               filtered.map((f) => (
                 <button className="list-item" key={f.id} onClick={() => pick(f)}>
@@ -138,14 +138,17 @@ export default function QuickLogModal({
         </div>
       )}
 
-      {/* Nested popup: create a new item, layered above */}
+      {/* Nested popup: create a new food, layered above */}
       <Modal
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        title="New item"
+        title="New food"
         z={110}
       >
         <AddFoodForm
+          nameTaken={(n) =>
+            foods.some((f) => f.name.trim().toLowerCase() === n)
+          }
           onAdd={async (f) => {
             const created = await addFood(f);
             setShowCreate(false);

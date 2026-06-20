@@ -18,22 +18,23 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 export default function FoodsPage() {
-  const { ready, foods, entries, addFood, updateFood } = useStore();
+  const { ready, foods, entries, addFood, updateFood, cleanupFoods } =
+    useStore();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("name");
   const [editing, setEditing] = useState<Food | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // How many times each item has been logged (for popularity sort).
+  // How many times each food has been logged (for popularity sort).
   const popularity = useMemo(() => {
     const m = new Map<string, number>();
     for (const e of entries) m.set(e.foodId, (m.get(e.foodId) ?? 0) + 1);
     return m;
   }, [entries]);
 
-  const items = useMemo(() => {
-    // Remove duplicates by name (case-insensitive), keep first occurrence.
+  const visible = useMemo(() => {
+    // De-duplicate by name (case-insensitive), keeping the first occurrence.
     const seen = new Set<string>();
     const unique: Food[] = [];
     for (const f of foods) {
@@ -68,38 +69,37 @@ export default function FoodsPage() {
 
   const flash = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 2200);
+    setTimeout(() => setToast(null), 2600);
+  };
+
+  const nameTaken = (lower: string, exceptId?: string) =>
+    foods.some(
+      (f) => f.id !== exceptId && f.name.trim().toLowerCase() === lower
+    );
+
+  const cleanup = () => {
+    const n = cleanupFoods();
+    flash(
+      n > 0
+        ? `Removed ${n} unused food${n > 1 ? "s" : ""}.`
+        : "No unused foods to remove."
+    );
   };
 
   return (
     <div>
-      <h1>Items</h1>
-      <p className="muted" style={{ marginTop: 0 }}>
-        Tap an item to edit it.
-      </p>
-
-      {toast && (
-        <div
-          className="card"
-          style={{ borderColor: "var(--green)", marginTop: 12 }}
-        >
-          ✅ {toast}
-        </div>
-      )}
-
-      <input
-        className="search"
-        placeholder="Search items…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        style={{ marginTop: 12, marginBottom: 10 }}
-      />
-
-      <div className="row" style={{ marginBottom: 14, gap: 8 }}>
-        <label style={{ margin: 0, flexShrink: 0 }}>Sort by</label>
+      <div className="row" style={{ marginBottom: 12 }}>
+        <h1 style={{ margin: 0 }}>Foods</h1>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortKey)}
+          aria-label="Sort foods"
+          style={{
+            width: "auto",
+            fontSize: "0.8rem",
+            padding: "6px 10px",
+            borderRadius: 999,
+          }}
         >
           {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
             <option key={k} value={k}>
@@ -109,11 +109,24 @@ export default function FoodsPage() {
         </select>
       </div>
 
+      {toast && (
+        <div className="card" style={{ borderColor: "var(--green)" }}>
+          ✅ {toast}
+        </div>
+      )}
+
+      <input
+        className="search"
+        placeholder="Search foods…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+
       <div className="card">
-        {items.length === 0 ? (
-          <p className="empty">No items match “{query}”.</p>
+        {visible.length === 0 ? (
+          <p className="empty">No foods match “{query}”.</p>
         ) : (
-          items.map((f) => (
+          visible.map((f) => (
             <button
               className="list-item"
               key={f.id}
@@ -146,14 +159,22 @@ export default function FoodsPage() {
       </div>
 
       <button
+        className="btn btn-ghost"
+        onClick={cleanup}
+        style={{ fontSize: "0.85rem" }}
+      >
+        Remove unused foods
+      </button>
+
+      <button
         className="fab"
         onClick={() => setShowAdd(true)}
-        aria-label="New item"
+        aria-label="New food"
       >
         +
       </button>
 
-      {/* Floating popup: edit an item */}
+      {/* Floating popup: edit a food */}
       <Modal
         open={!!editing}
         onClose={() => setEditing(null)}
@@ -163,6 +184,7 @@ export default function FoodsPage() {
           <AddFoodForm
             initial={editing}
             submitLabel="Save changes"
+            nameTaken={(n) => nameTaken(n, editing.id)}
             onAdd={(f) => {
               updateFood(editing.id, f);
               setEditing(null);
@@ -173,13 +195,14 @@ export default function FoodsPage() {
         )}
       </Modal>
 
-      {/* Floating popup: create a new item */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="New item">
+      {/* Floating popup: create a new food */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="New food">
         <AddFoodForm
-          onAdd={(f) => {
-            addFood(f);
+          nameTaken={(n) => nameTaken(n)}
+          onAdd={async (f) => {
+            await addFood(f);
             setShowAdd(false);
-            flash(`Added "${f.name}" to your items`);
+            flash(`Added "${f.name}" to your foods`);
           }}
           onCancel={() => setShowAdd(false)}
         />

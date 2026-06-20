@@ -29,6 +29,8 @@ interface StoreValue {
   profile: Profile;
   addFood: (f: Omit<Food, "id">) => Promise<Food> | Food;
   updateFood: (id: string, f: Omit<Food, "id">) => void;
+  // Delete user foods that have never been logged (returns count removed).
+  cleanupFoods: () => number;
   logFood: (foodId: string, quantity: number, date: string) => void;
   updateEntry: (id: string, quantity: number) => void;
   removeEntry: (id: string) => void;
@@ -259,6 +261,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             return next;
           });
         }
+      },
+      cleanupFoods: () => {
+        const usedIds = new Set(entries.map((e) => e.foodId));
+        const toDelete = userFoods.filter((f) => !usedIds.has(f.id));
+        if (toDelete.length === 0) return 0;
+        const deleteIds = new Set(toDelete.map((f) => f.id));
+        setUserFoods((p) => p.filter((f) => !deleteIds.has(f.id)));
+        if (remote)
+          for (const f of toDelete)
+            supabase!.from("foods").delete().eq("id", f.id).then(() => {});
+        return toDelete.length;
       },
       logFood: (foodId, quantity, date) => {
         if (remote) {

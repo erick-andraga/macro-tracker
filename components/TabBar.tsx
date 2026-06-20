@@ -50,7 +50,7 @@ function Icon({ name }: { name: string }) {
 
 const tabs = [
   { href: "/", label: "Track", icon: "today" },
-  { href: "/foods", label: "Items", icon: "foods" },
+  { href: "/foods", label: "Foods", icon: "foods" },
   { href: "/calendar", label: "History", icon: "history" },
   { href: "/profile", label: "Profile", icon: "profile" },
 ];
@@ -65,7 +65,7 @@ export default function TabBar() {
           const active =
             t.href === "/" ? pathname === "/" : pathname.startsWith(t.href);
           const title =
-            t.href === "/foods" ? `${foods.length} items registered` : t.label;
+            t.href === "/foods" ? `${foods.length} foods registered` : t.label;
           return (
             <Link
               key={t.href}

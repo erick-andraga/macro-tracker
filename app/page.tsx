@@ -143,7 +143,7 @@ export default function TodayPage() {
       <button
         className="fab"
         onClick={() => setShowLog(true)}
-        aria-label="Add item"
+        aria-label="Add food"
       >
         +
       </button>
@@ -217,14 +217,14 @@ export default function TodayPage() {
       <Modal
         open={!!pendingDelete}
         onClose={() => setPendingDelete(null)}
-        title="Remove item?"
+        title="Remove food?"
       >
         {pendingDelete && (
           <div>
             <p className="muted" style={{ marginTop: 0 }}>
               Remove{" "}
               <strong>
-                {foodMap.get(pendingDelete.foodId)?.name ?? "this item"}
+                {foodMap.get(pendingDelete.foodId)?.name ?? "this food"}
               </strong>{" "}
               from this day&apos;s log?
             </p>
