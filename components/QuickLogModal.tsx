@@ -39,7 +39,8 @@ export default function QuickLogModal({
   const [scanning, setScanning] = useState(false);
   const [scanNote, setScanNote] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const libraryRef = useRef<HTMLInputElement>(null);
   // Bumped when the create popup closes so an in-flight scan's result is
   // discarded instead of reopening the popup.
   const scanSeq = useRef(0);
@@ -284,48 +285,48 @@ export default function QuickLogModal({
               style={{ marginBottom: 0 }}
             />
             <button
-              className="btn"
-              style={{
-                flexShrink: 0,
-                width: 46,
-                height: 46,
-                padding: 0,
-                borderRadius: 12,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              onClick={() => fileRef.current?.click()}
+              className="btn scan-btn"
+              onClick={() => cameraRef.current?.click()}
               disabled={scanning}
-              aria-label="Scan a nutrition label"
+              aria-label="Scan a nutrition label with the camera"
             >
-              {scanning ? (
-                <span className="small">…</span>
-              ) : (
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              )}
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
             </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: "none" }}
-              onChange={onScanFile}
-            />
+            <button
+              className="btn btn-ghost scan-btn"
+              onClick={() => libraryRef.current?.click()}
+              disabled={scanning}
+              aria-label="Scan a nutrition label from your photo library"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+            </button>
           </div>
           <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
             {filtered.length === 0 ? (
@@ -355,6 +356,24 @@ export default function QuickLogModal({
           </div>
         </div>
       )}
+
+      {/* Hidden pickers, kept mounted so the draft popup can retake/re-pick.
+          The capture attribute opens the camera; without it, the library. */}
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: "none" }}
+        onChange={onScanFile}
+      />
+      <input
+        ref={libraryRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={onScanFile}
+      />
 
       {/* Nested popup: shows a loading state while the photo is being read,
           then the scanned draft as a new food. Layered above. */}
@@ -386,6 +405,20 @@ export default function QuickLogModal({
                 {scanNote}
               </p>
             )}
+            <div className="grid-2" style={{ marginBottom: 14 }}>
+              <button
+                className="btn btn-ghost"
+                onClick={() => cameraRef.current?.click()}
+              >
+                Retake photo
+              </button>
+              <button
+                className="btn btn-ghost"
+                onClick={() => libraryRef.current?.click()}
+              >
+                From library
+              </button>
+            </div>
             <AddFoodForm
               key={draft ? JSON.stringify(draft) : "blank"}
               initial={draft ?? undefined}
