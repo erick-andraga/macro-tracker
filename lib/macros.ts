@@ -6,6 +6,7 @@ import {
   MacroThreshold,
   MacroTotals,
   Profile,
+  Recipe,
 } from "./types";
 
 export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
@@ -118,3 +119,34 @@ export function entryTotals(
 }
 
 export const round = (n: number) => Math.round(n);
+
+// Turn a recipe into a Food whose macros are the live sum of its components,
+// so it can be listed and logged like any other food. Components that no longer
+// exist are skipped. The returned food is read-only (isRecipe = true).
+export function resolveRecipe(r: Recipe, foodById: Map<string, Food>): Food {
+  let calories = 0;
+  let protein = 0;
+  let carbs = 0;
+  let fat = 0;
+  let count = 0;
+  for (const c of r.components) {
+    const f = foodById.get(c.foodId);
+    if (!f) continue;
+    calories += f.calories * c.quantity;
+    protein += f.protein * c.quantity;
+    carbs += f.carbs * c.quantity;
+    fat += f.fat * c.quantity;
+    count += 1;
+  }
+  return {
+    id: r.id,
+    name: r.name,
+    serving: `${count} item${count === 1 ? "" : "s"}`,
+    calories,
+    protein,
+    carbs,
+    fat,
+    isRecipe: true,
+    components: r.components,
+  };
+}

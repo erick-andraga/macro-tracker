@@ -169,8 +169,8 @@ export default function TodayPage() {
             return (
               <div>
                 <p className="muted small" style={{ marginTop: 0 }}>
-                  Per {f.serving}: {f.calories} kcal · P{f.protein} / C{f.carbs}{" "}
-                  / F{f.fat}
+                  Per {f.serving}: {round(f.calories)} kcal · P{round(f.protein)}{" "}
+                  / C{round(f.carbs)} / F{round(f.fat)}
                 </p>
                 <div className="field">
                   <label>Servings</label>

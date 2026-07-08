@@ -15,18 +15,32 @@ export default function QuickLogModal({
   onClose: () => void;
   date?: string;
 }) {
-  const { foods, logFood, addFood } = useStore();
+  const { foods, entries, logFood, addFood } = useStore();
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<Food | null>(null);
   const [qty, setQty] = useState("1");
   const [showCreate, setShowCreate] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  // How many times each food has been logged, to order the list by frequency.
+  const freq = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const e of entries) m[e.foodId] = (m[e.foodId] ?? 0) + 1;
+    return m;
+  }, [entries]);
 
   const filtered = useMemo(
     () =>
-      foods.filter((f) =>
-        f.name.toLowerCase().includes(query.trim().toLowerCase())
-      ),
-    [foods, query]
+      foods
+        .filter((f) =>
+          f.name.toLowerCase().includes(query.trim().toLowerCase())
+        )
+        .sort(
+          (a, b) =>
+            (freq[b.id] ?? 0) - (freq[a.id] ?? 0) ||
+            a.name.localeCompare(b.name)
+        ),
+    [foods, query, freq]
   );
 
   const close = () => {
@@ -34,6 +48,7 @@ export default function QuickLogModal({
     setPicked(null);
     setQty("1");
     setShowCreate(false);
+    setSearchFocused(false);
     onClose();
   };
 
@@ -53,6 +68,7 @@ export default function QuickLogModal({
       open={open}
       onClose={close}
       title={picked ? `Add ${picked.name}` : "Add food"}
+      topAlign={!picked && searchFocused}
     >
       {!picked ? (
         <div>
@@ -62,6 +78,8 @@ export default function QuickLogModal({
               placeholder="Search foods…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               style={{ marginBottom: 0 }}
             />
             <button
@@ -105,8 +123,9 @@ export default function QuickLogModal({
       ) : (
         <div>
           <p className="muted small" style={{ marginTop: 0 }}>
-            Per {picked.serving}: {picked.calories} kcal · P{picked.protein} / C
-            {picked.carbs} / F{picked.fat}
+            Per {picked.serving}: {Math.round(picked.calories)} kcal · P
+            {Math.round(picked.protein)} / C{Math.round(picked.carbs)} / F
+            {Math.round(picked.fat)}
           </p>
           <div className="field">
             <label>Servings</label>

@@ -36,8 +36,21 @@ create table if not exists public.foods (
 );
 
 -- ---------------------------------------------------------------------------
+-- recipes: a named group of foods. Components are stored as JSON
+-- ([{ "foodId": "...", "quantity": 1 }, ...]); a recipe's macros are computed
+-- from the *current* values of its component foods in the app, never stored.
+-- ---------------------------------------------------------------------------
+create table if not exists public.recipes (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  name       text not null,
+  components jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
 -- entries: a logged food on a given day. food_id is text because it can point
--- at either a built-in sample food ("f1") or a user food (uuid as text).
+-- at either a built-in sample food ("f1"), a user food, or a recipe (uuid as text).
 -- ---------------------------------------------------------------------------
 create table if not exists public.entries (
   id         uuid primary key default gen_random_uuid(),
@@ -72,6 +85,7 @@ create table if not exists public.profile_snapshots (
 -- ---------------------------------------------------------------------------
 alter table public.profiles          enable row level security;
 alter table public.foods             enable row level security;
+alter table public.recipes           enable row level security;
 alter table public.entries           enable row level security;
 alter table public.profile_snapshots enable row level security;
 
@@ -82,6 +96,10 @@ create policy "own profile" on public.profiles
 
 drop policy if exists "own foods" on public.foods;
 create policy "own foods" on public.foods
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "own recipes" on public.recipes;
+create policy "own recipes" on public.recipes
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 drop policy if exists "own entries" on public.entries;

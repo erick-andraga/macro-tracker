@@ -8,12 +8,15 @@ export default function Modal({
   title,
   children,
   z,
+  topAlign,
 }: {
   open: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
   z?: number;
+  // Pin the sheet toward the top instead of vertically centering it.
+  topAlign?: boolean;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -32,7 +35,7 @@ export default function Modal({
 
   return (
     <div
-      className="modal-backdrop"
+      className={`modal-backdrop${topAlign ? " modal-backdrop-top" : ""}`}
       onClick={onClose}
       style={z ? { zIndex: z } : undefined}
     >
@@ -45,7 +48,11 @@ export default function Modal({
         <div className="modal-head">
           <span className="modal-grabber" />
           <div className="row">
-            <h2 style={{ margin: 0 }}>{title}</h2>
+            {typeof title === "string" ? (
+              <h2 style={{ margin: 0 }}>{title}</h2>
+            ) : (
+              <div style={{ margin: 0, flex: 1, minWidth: 0 }}>{title}</div>
+            )}
             <button
               className="modal-close"
               onClick={onClose}

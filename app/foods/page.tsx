@@ -5,6 +5,7 @@ import { useStore } from "@/lib/store";
 import { Food } from "@/lib/types";
 import Modal from "@/components/Modal";
 import AddFoodForm from "@/components/AddFoodForm";
+import RecipeForm from "@/components/RecipeForm";
 
 type SortKey = "name" | "popularity" | "kcal" | "protein" | "carbs" | "fat";
 
@@ -18,12 +19,25 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 export default function FoodsPage() {
-  const { ready, foods, entries, addFood, updateFood } = useStore();
+  const {
+    ready,
+    foods,
+    entries,
+    addFood,
+    updateFood,
+    addRecipe,
+    updateRecipe,
+    removeRecipe,
+  } = useStore();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("name");
   const [editing, setEditing] = useState<Food | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [addMode, setAddMode] = useState<"food" | "recipe">("food");
   const [toast, setToast] = useState<string | null>(null);
+
+  // Plain foods only (no recipes) — used as the building blocks for a recipe.
+  const baseFoods = useMemo(() => foods.filter((f) => !f.isRecipe), [foods]);
 
   // How many times each food has been logged (for popularity sort).
   const popularity = useMemo(() => {
@@ -123,21 +137,32 @@ export default function FoodsPage() {
               onClick={() => setEditing(f)}
             >
               <div>
-                <div className="name">{f.name}</div>
+                <div className="name">
+                  {f.name}
+                  {f.isRecipe && (
+                    <span className="pill" style={{ marginLeft: 8 }}>
+                      Recipe
+                    </span>
+                  )}
+                </div>
                 <div className="muted small">
-                  {f.serving} · {f.calories} kcal
+                  {f.serving} · {Math.round(f.calories)} kcal
                   {sortBy === "popularity" && (
                     <> · logged {popularity.get(f.id) ?? 0}×</>
                   )}
                 </div>
                 <div className="small" style={{ marginTop: 2 }}>
                   <span style={{ color: "var(--protein)" }}>
-                    Protein {f.protein}g
+                    Protein {Math.round(f.protein)}g
                   </span>
                   <span className="muted"> - </span>
-                  <span style={{ color: "var(--carbs)" }}>Carbs {f.carbs}g</span>
+                  <span style={{ color: "var(--carbs)" }}>
+                    Carbs {Math.round(f.carbs)}g
+                  </span>
                   <span className="muted"> - </span>
-                  <span style={{ color: "var(--fat)" }}>Fat {f.fat}g</span>
+                  <span style={{ color: "var(--fat)" }}>
+                    Fat {Math.round(f.fat)}g
+                  </span>
                 </div>
               </div>
               <span className="muted" style={{ fontSize: "1.2rem" }}>
@@ -150,44 +175,107 @@ export default function FoodsPage() {
 
       <button
         className="fab"
-        onClick={() => setShowAdd(true)}
-        aria-label="New food"
+        onClick={() => {
+          setAddMode("food");
+          setShowAdd(true);
+        }}
+        aria-label="New food or recipe"
       >
         +
       </button>
 
-      {/* Floating popup: edit a food */}
+      {/* Floating popup: edit a food or recipe */}
       <Modal
         open={!!editing}
         onClose={() => setEditing(null)}
         title={editing ? `Edit ${editing.name}` : ""}
       >
-        {editing && (
-          <AddFoodForm
-            initial={editing}
-            submitLabel="Save changes"
-            nameTaken={(n) => nameTaken(n, editing.id)}
-            onAdd={(f) => {
-              updateFood(editing.id, f);
-              setEditing(null);
-              flash(`Updated "${f.name}"`);
-            }}
-            onCancel={() => setEditing(null)}
-          />
-        )}
+        {editing &&
+          (editing.isRecipe ? (
+            <RecipeForm
+              initial={{
+                id: editing.id,
+                name: editing.name,
+                components: editing.components ?? [],
+              }}
+              foods={baseFoods}
+              submitLabel="Save changes"
+              nameTaken={(n) => nameTaken(n, editing.id)}
+              onAdd={(r) => {
+                updateRecipe(editing.id, r);
+                setEditing(null);
+                flash(`Updated "${r.name}"`);
+              }}
+              onDelete={() => {
+                removeRecipe(editing.id);
+                setEditing(null);
+                flash(`Deleted "${editing.name}"`);
+              }}
+              onCancel={() => setEditing(null)}
+            />
+          ) : (
+            <AddFoodForm
+              initial={editing}
+              submitLabel="Save changes"
+              nameTaken={(n) => nameTaken(n, editing.id)}
+              onAdd={(f) => {
+                updateFood(editing.id, f);
+                setEditing(null);
+                flash(`Updated "${f.name}"`);
+              }}
+              onCancel={() => setEditing(null)}
+            />
+          ))}
       </Modal>
 
-      {/* Floating popup: create a new food */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="New food">
-        <AddFoodForm
-          nameTaken={(n) => nameTaken(n)}
-          onAdd={async (f) => {
-            await addFood(f);
-            setShowAdd(false);
-            flash(`Added "${f.name}" to your foods`);
-          }}
-          onCancel={() => setShowAdd(false)}
-        />
+      {/* Floating popup: create a new food or recipe. The title itself is a
+          toggle between the two forms. */}
+      <Modal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        title={
+          <div className="toggle" role="tablist" aria-label="What to add">
+            <button
+              className={addMode === "food" ? "on" : ""}
+              onClick={() => setAddMode("food")}
+              role="tab"
+              aria-selected={addMode === "food"}
+            >
+              New food
+            </button>
+            <button
+              className={addMode === "recipe" ? "on" : ""}
+              onClick={() => setAddMode("recipe")}
+              role="tab"
+              aria-selected={addMode === "recipe"}
+            >
+              New recipe
+            </button>
+          </div>
+        }
+      >
+        {addMode === "food" ? (
+          <AddFoodForm
+            nameTaken={(n) => nameTaken(n)}
+            onAdd={async (f) => {
+              await addFood(f);
+              setShowAdd(false);
+              flash(`Added "${f.name}" to your foods`);
+            }}
+            onCancel={() => setShowAdd(false)}
+          />
+        ) : (
+          <RecipeForm
+            foods={baseFoods}
+            nameTaken={(n) => nameTaken(n)}
+            onAdd={async (r) => {
+              await addRecipe(r);
+              setShowAdd(false);
+              flash(`Added recipe "${r.name}"`);
+            }}
+            onCancel={() => setShowAdd(false)}
+          />
+        )}
       </Modal>
     </div>
   );

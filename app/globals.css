@@ -390,6 +390,15 @@ button.list-item {
   display: flex;
   flex-direction: column;
   animation: popin 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: margin-top 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Shift the sheet toward the top (e.g. while typing a search) for easier
+   reading of the list above the on-screen keyboard. */
+.modal-backdrop-top {
+  align-items: flex-start;
+}
+.modal-backdrop-top .modal-sheet {
+  margin-top: 4vh;
 }
 .modal-head {
   padding: 16px 18px 4px;

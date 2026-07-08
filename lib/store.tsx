@@ -7,13 +7,15 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Food, LogEntry, Profile } from "./types";
+import { Food, LogEntry, Profile, Recipe } from "./types";
+import { resolveRecipe } from "./macros";
 import { DEFAULT_PROFILE, SAMPLE_FOODS } from "./sampleData";
 import { supabase, supabaseEnabled } from "./supabase";
 import { useAuth } from "./auth";
 
 const KEYS = {
   foods: "mt.foods",
+  recipes: "mt.recipes",
   entries: "mt.entries",
   profile: "mt.profile",
   sampleEdits: "mt.sampleEdits",
@@ -24,11 +26,15 @@ export const monthStr = (d = new Date()) => todayStr(d).slice(0, 7);
 
 interface StoreValue {
   ready: boolean;
-  foods: Food[]; // built-in samples + user foods
+  foods: Food[]; // built-in samples + user foods + recipes (as resolved foods)
+  recipes: Recipe[];
   entries: LogEntry[];
   profile: Profile;
   addFood: (f: Omit<Food, "id">) => Promise<Food> | Food;
   updateFood: (id: string, f: Omit<Food, "id">) => void;
+  addRecipe: (r: Omit<Recipe, "id">) => Promise<Recipe> | Recipe;
+  updateRecipe: (id: string, r: Omit<Recipe, "id">) => void;
+  removeRecipe: (id: string) => void;
   // Delete user foods that have never been logged (returns count removed).
   cleanupFoods: () => number;
   logFood: (foodId: string, quantity: number, date: string) => void;
@@ -71,6 +77,16 @@ const entryFromRow = (r: any): LogEntry => ({
   quantity: Number(r.quantity),
   date: r.date,
 });
+const recipeFromRow = (r: any): Recipe => ({
+  id: r.id,
+  name: r.name,
+  components: Array.isArray(r.components)
+    ? r.components.map((c: any) => ({
+        foodId: c.foodId,
+        quantity: Number(c.quantity),
+      }))
+    : [],
+});
 const profileFromRow = (r: any): Profile => ({
   age: Number(r.age),
   sex: r.sex,
@@ -97,6 +113,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const [ready, setReady] = useState(false);
   const [userFoods, setUserFoods] = useState<Food[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [profile, setProfileState] = useState<Profile>(DEFAULT_PROFILE);
   // Edits to built-in sample foods, kept client-side (samples aren't in the DB).
@@ -131,6 +148,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         .from("foods")
         .select("*")
         .order("created_at", { ascending: false });
+      const { data: recs } = await supabase!
+        .from("recipes")
+        .select("*")
+        .order("created_at", { ascending: false });
       const { data: ents } = await supabase!
         .from("entries")
         .select("*")
@@ -141,6 +162,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       if (cancelled) return;
       setUserFoods((fds ?? []).map(foodFromRow));
+      setRecipes((recs ?? []).map(recipeFromRow));
       setEntries((ents ?? []).map(entryFromRow));
 
       const snapMap: Record<string, Profile> = {};
@@ -152,6 +174,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseEnabled) {
       // Local-only mode
       setUserFoods(load(KEYS.foods, []));
+      setRecipes(load(KEYS.recipes, []));
       setEntries(load(KEYS.entries, []));
       setProfileState(load(KEYS.profile, DEFAULT_PROFILE));
       setSnapshots(load(KEYS.snapshots, {}));
@@ -161,6 +184,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } else {
       // Signed out: AuthGate will show the login screen instead of pages
       setUserFoods([]);
+      setRecipes([]);
       setEntries([]);
       setProfileState(DEFAULT_PROFILE);
       setSnapshots({});
@@ -177,6 +201,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseEnabled && ready)
       window.localStorage.setItem(KEYS.foods, JSON.stringify(userFoods));
   }, [userFoods, ready]);
+  useEffect(() => {
+    if (!supabaseEnabled && ready)
+      window.localStorage.setItem(KEYS.recipes, JSON.stringify(recipes));
+  }, [recipes, ready]);
   useEffect(() => {
     if (!supabaseEnabled && ready)
       window.localStorage.setItem(KEYS.entries, JSON.stringify(entries));
@@ -209,7 +237,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         .then(() => {});
   }, [ready, snapshots, profile, remote, userId]);
 
-  const foods = useMemo(
+  // Plain foods (samples + user foods) that a recipe can be built from.
+  const baseFoods = useMemo(
     () => [
       ...SAMPLE_FOODS.map((f) =>
         sampleEdits[f.id] ? { ...f, ...sampleEdits[f.id] } : f
@@ -219,10 +248,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [userFoods, sampleEdits]
   );
 
+  // Recipes exposed as resolved foods, so they can be listed and logged like
+  // foods while their macros stay in sync with their component foods.
+  const foods = useMemo(() => {
+    const byId = new Map(baseFoods.map((f) => [f.id, f]));
+    return [...baseFoods, ...recipes.map((r) => resolveRecipe(r, byId))];
+  }, [baseFoods, recipes]);
+
   const value = useMemo<StoreValue>(
     () => ({
       ready,
       foods,
+      recipes,
       entries,
       profile,
       addFood: async (f) => {
@@ -262,8 +299,49 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           });
         }
       },
+      addRecipe: async (r) => {
+        if (remote) {
+          const { data, error } = await supabase!
+            .from("recipes")
+            .insert({
+              user_id: userId,
+              name: r.name,
+              components: r.components,
+            })
+            .select()
+            .single();
+          if (error || !data) {
+            const fallback: Recipe = { ...r, id: newId() };
+            setRecipes((p) => [fallback, ...p]);
+            return fallback;
+          }
+          const recipe = recipeFromRow(data);
+          setRecipes((p) => [recipe, ...p]);
+          return recipe;
+        }
+        const recipe: Recipe = { ...r, id: newId() };
+        setRecipes((p) => [recipe, ...p]);
+        return recipe;
+      },
+      updateRecipe: (id, r) => {
+        setRecipes((p) => p.map((x) => (x.id === id ? { ...r, id } : x)));
+        if (remote)
+          supabase!
+            .from("recipes")
+            .update({ name: r.name, components: r.components })
+            .eq("id", id)
+            .then(() => {});
+      },
+      removeRecipe: (id) => {
+        setRecipes((p) => p.filter((x) => x.id !== id));
+        if (remote)
+          supabase!.from("recipes").delete().eq("id", id).then(() => {});
+      },
       cleanupFoods: () => {
+        // A food counts as "used" if it's been logged or is part of a recipe.
         const usedIds = new Set(entries.map((e) => e.foodId));
+        for (const r of recipes)
+          for (const c of r.components) usedIds.add(c.foodId);
         const toDelete = userFoods.filter((f) => !usedIds.has(f.id));
         if (toDelete.length === 0) return 0;
         const deleteIds = new Set(toDelete.map((f) => f.id));
@@ -322,7 +400,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       entriesFor: (date) => entries.filter((e) => e.date === date),
       profileForMonth: (month) => snapshots[month] ?? profile,
     }),
-    [ready, foods, userFoods, entries, profile, snapshots, remote, userId]
+    [
+      ready,
+      foods,
+      userFoods,
+      recipes,
+      entries,
+      profile,
+      snapshots,
+      remote,
+      userId,
+    ]
   );
 
   return (
