@@ -6,6 +6,7 @@ import { entryTotals, goalMacros, round } from "@/lib/macros";
 import { CalorieBar, MacroBars } from "@/components/MacroDisplay";
 import QuickLogModal from "@/components/QuickLogModal";
 import Modal from "@/components/Modal";
+import RecipeComponents from "@/components/RecipeComponents";
 import type { LogEntry } from "@/lib/types";
 
 // Shift a YYYY-MM-DD calendar date by N days (timezone-independent).
@@ -17,8 +18,15 @@ const shiftDate = (ds: string, delta: number) => {
 };
 
 export default function TodayPage() {
-  const { ready, foods, entriesFor, profileForMonth, updateEntry, removeEntry } =
-    useStore();
+  const {
+    ready,
+    foods,
+    entries,
+    entriesFor,
+    profileForMonth,
+    updateEntry,
+    removeEntry,
+  } = useStore();
   const [date, setDate] = useState(todayStr());
   const [showLog, setShowLog] = useState(false);
   const [editing, setEditing] = useState<LogEntry | null>(null);
@@ -30,16 +38,32 @@ export default function TodayPage() {
     setEditQty(String(e.quantity));
   };
 
-  const todays = useMemo(
-    () => (ready ? entriesFor(date) : []),
-    [ready, date, entriesFor]
-  );
+  const foodMap = useMemo(() => new Map(foods.map((f) => [f.id, f])), [foods]);
+
+  // How many times each food has been logged overall (for popularity sort).
+  const popularity = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of entries) m.set(e.foodId, (m.get(e.foodId) ?? 0) + 1);
+    return m;
+  }, [entries]);
+
+  const todays = useMemo(() => {
+    if (!ready) return [];
+    const list = entriesFor(date);
+    // Show the day's foods ordered by how popular each one is.
+    return list.slice().sort((a, b) => {
+      const pa = popularity.get(a.foodId) ?? 0;
+      const pb = popularity.get(b.foodId) ?? 0;
+      const na = foodMap.get(a.foodId)?.name ?? "";
+      const nb = foodMap.get(b.foodId)?.name ?? "";
+      return pb - pa || na.localeCompare(nb);
+    });
+  }, [ready, date, entriesFor, popularity, foodMap]);
   const consumed = useMemo(() => entryTotals(todays, foods), [todays, foods]);
   const goal = useMemo(
     () => goalMacros(profileForMonth(date.slice(0, 7))),
     [profileForMonth, date]
   );
-  const foodMap = useMemo(() => new Map(foods.map((f) => [f.id, f])), [foods]);
 
   if (!ready) return <p className="muted">Loading…</p>;
 
@@ -172,6 +196,13 @@ export default function TodayPage() {
                   Per {f.serving}: {round(f.calories)} kcal · P{round(f.protein)}{" "}
                   / C{round(f.carbs)} / F{round(f.fat)}
                 </p>
+                {f.isRecipe && f.components && (
+                  <RecipeComponents
+                    components={f.components}
+                    foods={foods}
+                    scale={q}
+                  />
+                )}
                 <div className="field">
                   <label>Servings</label>
                   <input

@@ -5,6 +5,7 @@ import { useStore, todayStr } from "@/lib/store";
 import { Food } from "@/lib/types";
 import Modal from "./Modal";
 import AddFoodForm from "./AddFoodForm";
+import RecipeComponents from "./RecipeComponents";
 
 export default function QuickLogModal({
   open,
@@ -127,6 +128,13 @@ export default function QuickLogModal({
             {Math.round(picked.protein)} / C{Math.round(picked.carbs)} / F
             {Math.round(picked.fat)}
           </p>
+          {picked.isRecipe && picked.components && (
+            <RecipeComponents
+              components={picked.components}
+              foods={foods}
+              scale={parseFloat(qty) || 0}
+            />
+          )}
           <div className="field">
             <label>Servings</label>
             <input

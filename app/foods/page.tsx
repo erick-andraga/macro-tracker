@@ -30,7 +30,7 @@ export default function FoodsPage() {
     removeRecipe,
   } = useStore();
   const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<SortKey>("name");
+  const [sortBy, setSortBy] = useState<SortKey>("popularity");
   const [editing, setEditing] = useState<Food | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [addMode, setAddMode] = useState<"food" | "recipe">("food");
