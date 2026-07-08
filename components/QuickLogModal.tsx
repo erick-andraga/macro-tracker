@@ -40,6 +40,9 @@ export default function QuickLogModal({
   const [scanNote, setScanNote] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Bumped when the create popup closes so an in-flight scan's result is
+  // discarded instead of reopening the popup.
+  const scanSeq = useRef(0);
 
   // Plain foods only — the building blocks a recipe can be made of.
   const baseFoods = useMemo(() => foods.filter((f) => !f.isRecipe), [foods]);
@@ -83,15 +86,21 @@ export default function QuickLogModal({
     return { calories, protein, carbs, fat };
   }, [comps, foodById]);
 
+  const closeCreate = () => {
+    scanSeq.current++;
+    setScanning(false);
+    setShowCreate(false);
+    setDraft(null);
+    setScanNote(null);
+  };
+
   const close = () => {
     setMode("food");
     setQuery("");
     setPicked(null);
     setQty("1");
     setComps([]);
-    setShowCreate(false);
-    setDraft(null);
-    setScanNote(null);
+    closeCreate();
     setSearchFocused(false);
     onClose();
   };
@@ -123,21 +132,24 @@ export default function QuickLogModal({
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-picking the same photo
     if (!file) return;
+    const seq = ++scanSeq.current;
+    setDraft(null);
+    setScanNote(null);
     setScanning(true);
+    setShowCreate(true); // show the popup right away, in its loading state
+    let d: Partial<Food> = {};
+    let note = "Couldn't read the label — enter the values manually.";
     try {
-      const d = await scanNutritionFacts(file);
-      setDraft(d);
-      setScanNote(
-        Object.keys(d).length > 0
-          ? "Scanned from the photo — double-check the values before saving."
-          : "Couldn't read the label — enter the values manually."
-      );
+      d = await scanNutritionFacts(file);
+      if (Object.keys(d).length > 0)
+        note = "Scanned from the photo — double-check the values before saving.";
     } catch {
-      setDraft({});
-      setScanNote("Couldn't read the label — enter the values manually.");
+      // fall through with the empty draft + manual-entry note
     }
+    if (seq !== scanSeq.current) return; // popup was closed mid-scan
+    setDraft(d);
+    setScanNote(note);
     setScanning(false);
-    setShowCreate(true);
   };
 
   const nameTaken = (n: string) =>
@@ -315,11 +327,6 @@ export default function QuickLogModal({
               onChange={onScanFile}
             />
           </div>
-          {scanning && (
-            <p className="muted small" style={{ marginTop: 0 }}>
-              Reading the label…
-            </p>
-          )}
           <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
             {filtered.length === 0 ? (
               <p className="empty">No foods match “{query}”.</p>
@@ -349,39 +356,49 @@ export default function QuickLogModal({
         </div>
       )}
 
-      {/* Nested popup: review the scanned draft as a new food, layered above */}
+      {/* Nested popup: shows a loading state while the photo is being read,
+          then the scanned draft as a new food. Layered above. */}
       <Modal
         open={showCreate}
-        onClose={() => {
-          setShowCreate(false);
-          setDraft(null);
-          setScanNote(null);
-        }}
-        title="New food"
+        onClose={closeCreate}
+        title={scanning ? "Scanning label" : "New food"}
         z={110}
       >
-        {scanNote && (
-          <p className="muted small" style={{ marginTop: 0 }}>
-            {scanNote}
-          </p>
+        {scanning ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 14,
+              padding: "28px 0 20px",
+            }}
+          >
+            <span className="spinner" aria-hidden="true" />
+            <p className="muted small" style={{ margin: 0 }} role="status">
+              Reading the nutrition label…
+            </p>
+          </div>
+        ) : (
+          <>
+            {scanNote && (
+              <p className="muted small" style={{ marginTop: 0 }}>
+                {scanNote}
+              </p>
+            )}
+            <AddFoodForm
+              key={draft ? JSON.stringify(draft) : "blank"}
+              initial={draft ?? undefined}
+              nameTaken={nameTaken}
+              onAdd={async (f) => {
+                const created = await addFood(f);
+                closeCreate();
+                pick(created);
+              }}
+              onCancel={closeCreate}
+            />
+          </>
         )}
-        <AddFoodForm
-          key={draft ? JSON.stringify(draft) : "blank"}
-          initial={draft ?? undefined}
-          nameTaken={nameTaken}
-          onAdd={async (f) => {
-            const created = await addFood(f);
-            setShowCreate(false);
-            setDraft(null);
-            setScanNote(null);
-            pick(created);
-          }}
-          onCancel={() => {
-            setShowCreate(false);
-            setDraft(null);
-            setScanNote(null);
-          }}
-        />
       </Modal>
     </Modal>
   );
