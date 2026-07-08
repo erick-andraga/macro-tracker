@@ -6,6 +6,7 @@ import { Food } from "@/lib/types";
 import Modal from "@/components/Modal";
 import AddFoodForm from "@/components/AddFoodForm";
 import RecipeForm from "@/components/RecipeForm";
+import FoodIcon from "@/components/FoodIcon";
 
 type SortKey = "name" | "popularity" | "kcal" | "protein" | "carbs" | "fat";
 
@@ -136,7 +137,8 @@ export default function FoodsPage() {
               key={f.id}
               onClick={() => setEditing(f)}
             >
-              <div>
+              <FoodIcon food={f} />
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="name">
                   {f.name}
                   {f.isRecipe && (
@@ -241,7 +243,7 @@ export default function FoodsPage() {
               role="tab"
               aria-selected={addMode === "food"}
             >
-              New food
+              New Food
             </button>
             <button
               className={addMode === "recipe" ? "on" : ""}
@@ -249,7 +251,7 @@ export default function FoodsPage() {
               role="tab"
               aria-selected={addMode === "recipe"}
             >
-              New recipe
+              New Recipe
             </button>
           </div>
         }

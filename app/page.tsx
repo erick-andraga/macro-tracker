@@ -7,6 +7,7 @@ import { CalorieBar, MacroBars } from "@/components/MacroDisplay";
 import QuickLogModal from "@/components/QuickLogModal";
 import Modal from "@/components/Modal";
 import RecipeComponents from "@/components/RecipeComponents";
+import FoodIcon from "@/components/FoodIcon";
 import type { LogEntry } from "@/lib/types";
 
 // Shift a YYYY-MM-DD calendar date by N days (timezone-independent).
@@ -129,6 +130,7 @@ export default function TodayPage() {
               if (!f) return null;
               return (
                 <div className="list-item" key={e.id}>
+                  <FoodIcon food={f} />
                   <button
                     onClick={() => openEdit(e)}
                     style={{

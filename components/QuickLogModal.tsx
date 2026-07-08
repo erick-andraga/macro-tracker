@@ -8,6 +8,7 @@ import { scanNutritionFacts } from "@/lib/scanNutrition";
 import Modal from "./Modal";
 import AddFoodForm from "./AddFoodForm";
 import RecipeForm from "./RecipeForm";
+import FoodIcon from "./FoodIcon";
 
 export default function QuickLogModal({
   open,
@@ -316,7 +317,8 @@ export default function QuickLogModal({
             ) : (
               filtered.map((f) => (
                 <button className="list-item" key={f.id} onClick={() => pick(f)}>
-                  <div>
+                  <FoodIcon food={f} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="name">
                       {f.name}
                       {f.isRecipe && (
@@ -362,7 +364,7 @@ export default function QuickLogModal({
       <Modal
         open={showCreate}
         onClose={closeCreate}
-        title={scanning ? "Scanning label" : "New food"}
+        title={scanning ? "Scanning label" : "New Food"}
         z={110}
       >
         {scanning ? (
