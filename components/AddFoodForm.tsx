@@ -12,7 +12,8 @@ export default function AddFoodForm({
 }: {
   onAdd: (f: Omit<Food, "id">) => void | Promise<unknown>;
   onCancel: () => void;
-  initial?: Food;
+  // May be a partial draft (e.g. values scanned from a nutrition label).
+  initial?: Partial<Food>;
   submitLabel?: string;
   // Returns true if another food already uses this (trimmed, lower-cased) name.
   nameTaken?: (name: string) => boolean;
@@ -20,13 +21,17 @@ export default function AddFoodForm({
   const [name, setName] = useState(initial?.name ?? "");
   const [serving, setServing] = useState(initial?.serving ?? "");
   const [calories, setCalories] = useState(
-    initial ? String(initial.calories) : ""
+    initial?.calories != null ? String(initial.calories) : ""
   );
   const [protein, setProtein] = useState(
-    initial ? String(initial.protein) : ""
+    initial?.protein != null ? String(initial.protein) : ""
   );
-  const [carbs, setCarbs] = useState(initial ? String(initial.carbs) : "");
-  const [fat, setFat] = useState(initial ? String(initial.fat) : "");
+  const [carbs, setCarbs] = useState(
+    initial?.carbs != null ? String(initial.carbs) : ""
+  );
+  const [fat, setFat] = useState(
+    initial?.fat != null ? String(initial.fat) : ""
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

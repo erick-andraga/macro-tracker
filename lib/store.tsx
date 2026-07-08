@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Food, LogEntry, Profile, Recipe } from "./types";
+import { Food, LogEntry, Profile, Recipe, RecipeComponent } from "./types";
 import { resolveRecipe } from "./macros";
 import { DEFAULT_PROFILE, SAMPLE_FOODS } from "./sampleData";
 import { supabase, supabaseEnabled } from "./supabase";
@@ -16,6 +16,7 @@ import { useAuth } from "./auth";
 const KEYS = {
   foods: "mt.foods",
   recipes: "mt.recipes",
+  recipeCompLogs: "mt.recipeCompLogs",
   entries: "mt.entries",
   profile: "mt.profile",
   sampleEdits: "mt.sampleEdits",
@@ -35,6 +36,9 @@ interface StoreValue {
   addRecipe: (r: Omit<Recipe, "id">) => Promise<Recipe> | Recipe;
   updateRecipe: (id: string, r: Omit<Recipe, "id">) => void;
   removeRecipe: (id: string) => void;
+  // Record the component quantities used for a recipe each time it's logged
+  // (history; the recipe itself always keeps the latest values).
+  logRecipeComponents: (recipeId: string, components: RecipeComponent[]) => void;
   // Delete user foods that have never been logged (returns count removed).
   cleanupFoods: () => number;
   logFood: (foodId: string, quantity: number, date: string) => void;
@@ -336,6 +340,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setRecipes((p) => p.filter((x) => x.id !== id));
         if (remote)
           supabase!.from("recipes").delete().eq("id", id).then(() => {});
+      },
+      logRecipeComponents: (recipeId, components) => {
+        if (remote) {
+          supabase!
+            .from("recipe_component_logs")
+            .insert({ user_id: userId, recipe_id: recipeId, components })
+            .then(() => {});
+          return;
+        }
+        const logs = load<unknown[]>(KEYS.recipeCompLogs, []);
+        logs.push({
+          id: newId(),
+          recipeId,
+          components,
+          at: new Date().toISOString(),
+        });
+        window.localStorage.setItem(KEYS.recipeCompLogs, JSON.stringify(logs));
       },
       cleanupFoods: () => {
         // A food counts as "used" if it's been logged or is part of a recipe.

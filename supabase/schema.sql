@@ -49,6 +49,22 @@ create table if not exists public.recipes (
 );
 
 -- ---------------------------------------------------------------------------
+-- recipe_component_logs: the component quantities used each time a recipe is
+-- logged (history/audit). The recipe row itself always holds the latest values.
+-- recipe_id is text for the same reason as entries.food_id.
+-- ---------------------------------------------------------------------------
+create table if not exists public.recipe_component_logs (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  recipe_id  text not null,
+  components jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists recipe_component_logs_user_recipe_idx
+  on public.recipe_component_logs (user_id, recipe_id);
+
+-- ---------------------------------------------------------------------------
 -- entries: a logged food on a given day. food_id is text because it can point
 -- at either a built-in sample food ("f1"), a user food, or a recipe (uuid as text).
 -- ---------------------------------------------------------------------------
@@ -83,11 +99,12 @@ create table if not exists public.profile_snapshots (
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
-alter table public.profiles          enable row level security;
-alter table public.foods             enable row level security;
-alter table public.recipes           enable row level security;
-alter table public.entries           enable row level security;
-alter table public.profile_snapshots enable row level security;
+alter table public.profiles              enable row level security;
+alter table public.foods                 enable row level security;
+alter table public.recipes               enable row level security;
+alter table public.recipe_component_logs enable row level security;
+alter table public.entries               enable row level security;
+alter table public.profile_snapshots    enable row level security;
 
 -- Drop-then-create so this file is safe to re-run.
 drop policy if exists "own profile" on public.profiles;
@@ -100,6 +117,10 @@ create policy "own foods" on public.foods
 
 drop policy if exists "own recipes" on public.recipes;
 create policy "own recipes" on public.recipes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "own recipe component logs" on public.recipe_component_logs;
+create policy "own recipe component logs" on public.recipe_component_logs
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 drop policy if exists "own entries" on public.entries;
